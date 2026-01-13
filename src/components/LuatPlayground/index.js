@@ -39,6 +39,8 @@ function formatHtml(html) {
 // Singleton for the Luat WASM module
 let luatModule = null;
 let luatLoading = null;
+let instanceCounter = 0;
+let lastCompiledInstance = null; // Track which instance last compiled templates
 
 /**
  * Load the Luat WASM module
@@ -147,6 +149,12 @@ export default function LuatPlayground({
   const htmlViewerRef = useRef(null);
   const htmlViewerViewRef = useRef(null);
   const lastCompiledRef = useRef(null); // Cache: stores hash of last compiled code
+  const instanceIdRef = useRef(null); // Unique ID for this playground instance
+
+  // Initialize instance ID once
+  if (instanceIdRef.current === null) {
+    instanceIdRef.current = ++instanceCounter;
+  }
 
   // Keep refs to avoid stale closures in callbacks
   const filesRef = useRef(files);
@@ -312,12 +320,15 @@ export default function LuatPlayground({
     // Use ref to always get latest files (avoids stale closure)
     const currentFiles = filesRef.current;
     const currentHash = getFilesHash(currentFiles);
+    const instanceId = instanceIdRef.current;
 
     try {
-      // Only reload templates if files changed
+      // Recompile if: code changed OR a different playground instance compiled last
       const codeChanged = lastCompiledRef.current !== currentHash;
+      const differentInstance = lastCompiledInstance !== instanceId;
+      const needsRecompile = codeChanged || differentInstance;
 
-      if (codeChanged) {
+      if (needsRecompile) {
         const compileStart = performance.now();
         luat.clearTemplates();
         for (const file of currentFiles) {
@@ -325,6 +336,7 @@ export default function LuatPlayground({
         }
         const compileMs = performance.now() - compileStart;
         lastCompiledRef.current = currentHash;
+        lastCompiledInstance = instanceId;
         setCached(false);
         setCompileTime(formatTime(compileMs));
       } else {
@@ -380,6 +392,10 @@ export default function LuatPlayground({
     setRenderTime(null);
     setCached(false);
     lastCompiledRef.current = null;
+    // Clear global instance tracker so next run will recompile
+    if (lastCompiledInstance === instanceIdRef.current) {
+      lastCompiledInstance = null;
+    }
   }, [initialCode, initialFiles]);
 
   // Generate iframe content with Tailwind and optional libraries

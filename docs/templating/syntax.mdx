@@ -91,18 +91,21 @@ local title = "Click here for more info"
 local href = "https://example.com"
 </script>
 
-<div class="space-y-2">
-    <!-- Shorthand syntax -->
-    <a {href} {title} class="text-blue-500 underline">
-        Link with shorthand attributes
-    </a>
-
-    <!-- Equivalent to: -->
-    <a href={href} title={title} class="text-blue-500 underline">
-        Link with explicit attributes
-    </a>
-</div>`}
-  height={220}
+<ul class="space-y-3">
+    <li class="p-2 bg-gray-100 dark:bg-gray-800 rounded">
+        <!-- Shorthand syntax -->
+        <a {href} {title} class="text-blue-500 underline">
+            Link with shorthand attributes
+        </a>
+    </li>
+    <li class="p-2 bg-gray-100 dark:bg-gray-800 rounded">
+        <!-- Equivalent to: -->
+        <a href={href} title={title} class="text-blue-500 underline">
+            Link with explicit attributes
+        </a>
+    </li>
+</ul>`}
+  height={250}
 />
 
 For more advanced techniques, including conditional classes and integrating with client-side libraries, see the [Dynamic Attributes & Classes](./dynamic-attributes.mdx) guide.
@@ -243,7 +246,7 @@ local Badge = require("Badge")
 local badgeProps = { label = "New", color = "green" }
 </script>
 
-<div class="space-y-4">
+<div class="space-x-4">
     <Badge {...badgeProps} />
     <Badge label="Sale" color="red" />
     <Badge label="Popular" color="blue" />
