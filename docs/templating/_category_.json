@@ -1,0 +1,8 @@
+{
+  "label": "LUAT Templating",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "Learn LUAT, Wunderframe's powerful server-side templating engine inspired by Svelte. Build dynamic web applications with component-based architecture."
+  }
+}

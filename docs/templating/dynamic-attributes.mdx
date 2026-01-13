@@ -1,0 +1,676 @@
+---
+sidebar_label: 'Dynamic Attributes'
+---
+
+import LuatPlayground from '@site/src/components/LuatPlayground';
+
+# Dynamic Attributes & Classes
+
+Luat provides a flexible and powerful system for manipulating HTML attributes and CSS classes dynamically. This allows you to build responsive, stateful components with ease, from simple dynamic properties to complex conditional styling.
+
+## Attribute Binding
+
+You can bind attributes to dynamic values using the same curly brace syntax as text interpolation.
+
+```html
+<script>
+    local imageUrl = "/images/profile.png"
+    local altText = "A portrait of the user"
+    local isDisabled = false
+</script>
+
+<img src={imageUrl} alt={altText} />
+<button disabled={isDisabled}>Submit</button>
+```
+
+<LuatPlayground
+  code={`<script>
+local imageUrl = "https://picsum.photos/200/100"
+local altText = "A random landscape"
+local linkUrl = "https://example.com"
+local linkTitle = "Visit Example Site"
+</script>
+
+<div class="space-y-4 p-4 bg-white dark:bg-gray-800 rounded-lg">
+    <img src={imageUrl} alt={altText} class="rounded-lg shadow-md" />
+
+    <a href={linkUrl} title={linkTitle} class="text-blue-500 dark:text-blue-400 hover:underline">
+        {linkTitle}
+    </a>
+
+    <input
+        type="text"
+        placeholder="Dynamic placeholder"
+        value="Pre-filled value"
+        class="border dark:border-gray-600 rounded px-3 py-2 w-full bg-white dark:bg-gray-700 dark:text-gray-100"
+    />
+</div>`}
+  height={280}
+/>
+
+### Boolean Attributes
+
+For boolean attributes like `disabled`, `checked`, or `selected`, the attribute is included when the value is `true` and omitted when `false`.
+
+```html
+<input type="checkbox" checked={isSubscribed} />
+
+<!-- Shorthand: equivalent to checked={checked} -->
+<input type="checkbox" {checked} />
+```
+
+<LuatPlayground
+  code={`<script>
+local isDisabled = true
+local isChecked = true
+local isReadonly = false
+</script>
+
+<div class="space-y-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+    <div class="flex items-center gap-3">
+        <input type="checkbox" checked={isChecked} class="w-5 h-5" />
+        <label class="dark:text-gray-200">This checkbox is checked (checked={"{isChecked}"})</label>
+    </div>
+
+    <div class="flex items-center gap-3">
+        <input type="checkbox" checked={isReadonly} class="w-5 h-5" />
+        <label class="dark:text-gray-200">This checkbox is unchecked (checked={"{isReadonly}"})</label>
+    </div>
+
+    <div class="flex gap-3">
+        <button
+            disabled={isDisabled}
+            class="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+            Disabled Button
+        </button>
+
+        <button
+            disabled={isReadonly}
+            class="px-4 py-2 bg-green-500 text-white rounded disabled:opacity-50"
+        >
+            Enabled Button
+        </button>
+    </div>
+</div>`}
+  height={300}
+/>
+
+## Dynamic CSS Classes
+
+Managing CSS classes is a common task, and Luat offers multiple approaches to make it declarative and intuitive.
+
+### String Concatenation
+
+The simplest approach is concatenating class strings:
+
+<LuatPlayground
+  code={`<script>
+local isActive = true
+local size = "large"
+
+local baseClasses = "px-4 py-2 rounded font-semibold"
+local stateClass = isActive and "bg-blue-500 text-white" or "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+local sizeClass = size == "large" and "text-lg" or "text-sm"
+</script>
+
+<div class="space-y-4">
+    <button class={baseClasses .. " " .. stateClass .. " " .. sizeClass}>
+        Active Large Button
+    </button>
+
+    <p class={"text-center " .. (isActive and "text-green-600 font-bold" or "text-gray-400 dark:text-gray-500")}>
+        Status: {isActive and "Active" or "Inactive"}
+    </p>
+</div>`}
+  height={220}
+/>
+
+### Conditional Classes with Tables
+
+The most powerful way to handle classes is by passing a Lua table to the `class` attribute. The keys are the class names, and the boolean values determine if they are included in the rendered HTML.
+
+This makes it easy to mix static and dynamic classes, and to toggle classes based on component state.
+
+```html
+<script>
+    local hasError = true
+    local isPrimary = false
+
+    local classes = {
+        ["button"] = true, -- always include 'button'
+        ["button-primary"] = isPrimary,
+        ["button-error"] = hasError,
+        ["font-bold text-lg"] = true -- multiple classes in one key
+    }
+</script>
+
+<div class={classes}>
+  Click Me
+</div>
+```
+
+**Result:**
+
+```html
+<div class="button button-error font-bold text-lg">
+  Click Me
+</div>
+```
+
+<LuatPlayground
+  code={`<script>
+local hasError = true
+local isPrimary = false
+local isLarge = true
+
+local errorClasses = {
+    ["px-4 py-3 rounded-lg border-2"] = true,
+    ["border-red-500 bg-red-50 dark:bg-red-900 text-red-800 dark:text-red-200"] = hasError,
+    ["border-blue-500 bg-blue-50 dark:bg-blue-900 text-blue-800 dark:text-blue-200"] = isPrimary,
+    ["border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200"] = not hasError and not isPrimary,
+    ["text-lg font-bold"] = isLarge,
+    ["text-sm"] = not isLarge
+}
+
+local primaryClasses = {
+    ["px-4 py-3 rounded-lg border-2"] = true,
+    ["border-red-500 bg-red-50 dark:bg-red-900 text-red-800 dark:text-red-200"] = false,
+    ["border-blue-500 bg-blue-50 dark:bg-blue-900 text-blue-800 dark:text-blue-200"] = true,
+    ["text-lg font-bold"] = false,
+    ["text-sm"] = true
+}
+</script>
+
+<div class="space-y-4">
+    <div class={errorClasses}>
+        hasError = true, isPrimary = false, isLarge = true
+    </div>
+
+    <div class={primaryClasses}>
+        hasError = false, isPrimary = true, isLarge = false
+    </div>
+</div>`}
+  height={300}
+/>
+
+### Building a Dynamic Component
+
+Here's a practical example of a Badge component with multiple style variants:
+
+<LuatPlayground
+  files={[
+    {
+      name: 'main.luat',
+      code: `<script>
+local Badge = require("Badge")
+</script>
+
+<div class="space-y-4">
+    <div class="flex flex-wrap gap-2">
+        <Badge variant="default">Default</Badge>
+        <Badge variant="primary">Primary</Badge>
+        <Badge variant="success">Success</Badge>
+        <Badge variant="warning">Warning</Badge>
+        <Badge variant="danger">Danger</Badge>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+        <Badge variant="primary" size="sm">Small</Badge>
+        <Badge variant="primary" size="md">Medium</Badge>
+        <Badge variant="primary" size="lg">Large</Badge>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+        <Badge variant="success" rounded={true}>Rounded</Badge>
+        <Badge variant="danger" rounded={false}>Square</Badge>
+    </div>
+</div>`
+    },
+    {
+      name: 'Badge.luat',
+      code: `<script>
+local variant = props.variant or "default"
+local size = props.size or "md"
+local rounded = props.rounded
+if rounded == nil then rounded = true end
+
+local variants = {
+    default = "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200",
+    primary = "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200",
+    success = "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200",
+    warning = "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200",
+    danger = "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
+}
+
+local sizes = {
+    sm = "px-2 py-0.5 text-xs",
+    md = "px-3 py-1 text-sm",
+    lg = "px-4 py-1.5 text-base"
+}
+
+local classes = {
+    ["inline-flex items-center font-medium"] = true,
+    [variants[variant] or variants.default] = true,
+    [sizes[size] or sizes.md] = true,
+    ["rounded-full"] = rounded,
+    ["rounded"] = not rounded
+}
+</script>
+
+<span class={classes}>
+    {@render props.children?.()}
+</span>`
+    }
+  ]}
+  height={380}
+/>
+
+## Data Attributes
+
+Dynamic data attributes are useful for storing custom data or integrating with JavaScript libraries. Click on the items below to see the data attributes in action:
+
+<LuatPlayground
+  alpine={true}
+  code={`<script>
+local json = require("json")
+
+local items = {
+    { id = 1, name = "Apple", category = "fruit", price = 1.50 },
+    { id = 2, name = "Carrot", category = "vegetable", price = 0.75 },
+    { id = 3, name = "Bread", category = "bakery", price = 2.50 }
+}
+
+local xdata = json.encode({ selected = json.null })
+</script>
+
+<div x-data={@html xdata}>
+    <ul class="space-y-2">
+    {#each items as item}
+        {@local itemIdStr = tostring(item.id)}
+        <li
+            data-id={item.id}
+            data-category={item.category}
+            data-price={item.price}
+            x-on:click="selected = $el.dataset"
+            class="p-3 bg-white dark:bg-gray-800 rounded-lg shadow flex justify-between items-center hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+            x-bind:class={"selected?.id == '" .. itemIdStr .. "' ? 'ring-2 ring-blue-500' : ''"}
+        >
+            <span class="font-medium dark:text-gray-100">{item.name}</span>
+            <div class="flex gap-4 text-sm text-gray-500 dark:text-gray-400">
+                <span class="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">{item.category}</span>
+                <span class="text-green-600 font-semibold">${'$'}{item.price}</span>
+            </div>
+        </li>
+    {/each}
+    </ul>
+
+    <div x-show="selected" x-cloak class="mt-4 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg border border-blue-200 dark:border-blue-700">
+        <h4 class="font-bold text-blue-800 dark:text-blue-200 mb-2">Selected Item Data:</h4>
+        <pre class="text-sm text-blue-700 dark:text-blue-300" x-text="JSON.stringify(selected, null, 2)"></pre>
+    </div>
+</div>`}
+  height={420}
+/>
+
+## Integrating with Client-Side Libraries
+
+Luat works seamlessly with client-side libraries like Alpine.js and htmx. The server renders the initial HTML with all the necessary attributes, and the client-side library takes over for interactivity.
+
+### Alpine.js Integration
+
+Alpine.js is perfect for adding lightweight interactivity. Here's a live example of a counter and toggle:
+
+<LuatPlayground
+  alpine={true}
+  code={`<script>
+local json = require("json")
+
+local title = "Alpine.js Counter Demo"
+local initialCount = 5
+
+local counterData = json.encode({ count = initialCount })
+local toggleData = json.encode({ open = false })
+</script>
+
+<div class="space-y-6">
+    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">{title}</h2>
+
+    <!-- Counter Component -->
+    <div x-data={@html counterData} class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <div class="flex items-center gap-4">
+            <button
+                x-on:click="count--"
+                class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+            >
+                -
+            </button>
+            <span class="text-3xl font-bold w-16 text-center dark:text-gray-100" x-text="count"></span>
+            <button
+                x-on:click="count++"
+                class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+            >
+                +
+            </button>
+        </div>
+        <p class="mt-3 text-gray-500 dark:text-gray-400 text-sm">
+            Initial value from server: <strong>{initialCount}</strong>
+        </p>
+    </div>
+
+    <!-- Toggle Component -->
+    <div x-data={@html toggleData} class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <button
+            x-on:click="open = !open"
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition flex items-center gap-2"
+        >
+            <span x-text="open ? 'Hide' : 'Show'"></span> Details
+        </button>
+        <div
+            x-show="open"
+            x-transition
+            x-cloak
+            class="mt-4 p-4 bg-blue-50 dark:bg-blue-900 rounded border border-blue-200 dark:border-blue-700"
+        >
+            <p class="dark:text-gray-200">This content is toggled with Alpine.js!</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">The initial HTML was rendered by Luat on the server.</p>
+        </div>
+    </div>
+</div>`}
+  height={480}
+/>
+
+### Passing Complex Data to Alpine.js
+
+When you need to pass complex data from the server to Alpine.js, you can use JSON encoding:
+
+<LuatPlayground
+  alpine={true}
+  code={`<script>
+local json = require("json")
+
+local products = {
+    { id = 1, name = "Laptop", price = 999.99, inStock = true },
+    { id = 2, name = "Mouse", price = 29.99, inStock = true },
+    { id = 3, name = "Keyboard", price = 79.99, inStock = false },
+    { id = 4, name = "Monitor", price = 349.99, inStock = true }
+}
+
+local productsJson = json.encode(products)
+local xdata = "{ products: " .. productsJson .. ", cart: [], filter: 'all' }"
+</script>
+
+<div x-data={@html xdata}>
+    <!-- Filters -->
+    <div class="flex gap-2 mb-4">
+        <button
+            x-on:click="filter = 'all'"
+            x-bind:class="filter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 dark:text-gray-200'"
+            class="px-3 py-1 rounded transition"
+        >
+            All
+        </button>
+        <button
+            x-on:click="filter = 'inStock'"
+            x-bind:class="filter === 'inStock' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 dark:text-gray-200'"
+            class="px-3 py-1 rounded transition"
+        >
+            In Stock
+        </button>
+    </div>
+
+    <!-- Product List -->
+    <div class="space-y-2">
+        <template x-for="product in products.filter(p => filter === 'all' || p.inStock)" x-bind:key="product.id">
+            <div class="flex justify-between items-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow">
+                <div>
+                    <span class="font-medium dark:text-gray-100" x-text="product.name"></span>
+                    <span class="text-green-600 ml-2" x-text="'$' + product.price.toFixed(2)"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span
+                        x-show="!product.inStock"
+                        class="text-xs px-2 py-0.5 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 rounded"
+                    >
+                        Out of Stock
+                    </span>
+                    <button
+                        x-show="product.inStock && !cart.includes(product.id)"
+                        x-on:click="cart.push(product.id)"
+                        class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+                    >
+                        Add to Cart
+                    </button>
+                    <span
+                        x-show="cart.includes(product.id)"
+                        class="text-green-600 text-sm font-medium"
+                    >
+                        In Cart
+                    </span>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- Cart Summary -->
+    <div class="mt-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+        <span class="font-medium dark:text-gray-100">Cart:</span>
+        <span class="dark:text-gray-200" x-text="cart.length + ' items'"></span>
+    </div>
+</div>`}
+  height={480}
+/>
+
+### Form Handling with Alpine.js
+
+This example demonstrates the power of server-side rendering combined with Alpine.js. Notice how:
+
+- **All configuration lives in Lua** - field definitions, labels, placeholders, validation messages, styling
+- **Validation script is generated server-side** - Luat compiles the JavaScript from field definitions
+- **Form fields rendered via `{#each}`** - Data-driven form generation
+- **Alpine.js is minimal** - only handles state (`x-data`, `x-model`, `x-show`)
+
+<LuatPlayground
+  alpine={true}
+  code={`<script>
+local json = require("json")
+
+-- =============================================
+-- SERVER-SIDE: All configuration in Lua
+-- =============================================
+
+local config = {
+    title = "Contact Us",
+    subtitle = "We'd love to hear from you",
+    submitLabel = "Send Message",
+    successTitle = "Message Sent!",
+    successMsg = "Thank you! We'll get back to you soon.",
+    resetLabel = "Send Another"
+}
+
+-- Field definitions drive the entire form
+local fields = {
+    { name = "name", label = "Full Name", inputType = "text",
+      placeholder = "John Doe", required = true,
+      errorMsg = "Please enter your name" },
+
+    { name = "email", label = "Email", inputType = "email",
+      placeholder = "john@example.com", required = true,
+      errorMsg = "Please enter a valid email" },
+
+    { name = "subject", label = "Subject", inputType = "select",
+      required = true, errorMsg = "Please select a subject",
+      options = {
+          { value = "", text = "Choose a subject..." },
+          { value = "general", text = "General Inquiry" },
+          { value = "support", text = "Technical Support" },
+          { value = "sales", text = "Sales Question" }
+      }},
+
+    { name = "message", label = "Message", inputType = "textarea",
+      placeholder = "How can we help?", required = true,
+      errorMsg = "Please enter a message", rows = 3 }
+}
+
+-- Styles (server-defined)
+local styles = {
+    input = "w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100",
+    label = "block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1",
+    error = "mt-1 text-sm text-red-600 dark:text-red-400",
+    button = "w-full py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
+}
+
+-- Generate Alpine state from field definitions (server-side!)
+local state = { submitted = false, errors = {} }
+for _, f in ipairs(fields) do
+    state[f.name] = ""
+    if f.required then state.errors[f.name] = "" end
+end
+
+-- Generate validation JS from field definitions (server-side!)
+local validation = { "errors = {}; let ok = true;" }
+for _, f in ipairs(fields) do
+    if f.required then
+        local check = string.format(
+            "if (!%s || !%s.trim()) { errors.%s = '%s'; ok = false; }",
+            f.name, f.name, f.name, f.errorMsg
+        )
+        table.insert(validation, check)
+    end
+end
+table.insert(validation, "if (ok) submitted = true;")
+local onSubmit = table.concat(validation, " ")
+
+-- Generate reset JS from field definitions (server-side!)
+local resetParts = { "submitted = false" }
+for _, f in ipairs(fields) do
+    table.insert(resetParts, f.name .. " = ''")
+end
+table.insert(resetParts, "errors = {}")
+local onReset = table.concat(resetParts, "; ")
+</script>
+
+<div x-data={@html json.encode(state)} class="max-w-md mx-auto">
+    <!-- Header -->
+    <div class="mb-6">
+        <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">{config.title}</h3>
+        <p class="text-gray-500 dark:text-gray-400 text-sm">{config.subtitle}</p>
+    </div>
+
+    <!-- Form (structure from field definitions) -->
+    <form x-show="!submitted" x-on:submit.prevent={onSubmit} class="space-y-4">
+        {#each fields as field}
+            <div>
+                <label class={styles.label}>
+                    {field.label}
+                    {#if field.required}<span class="text-red-500 ml-0.5">*</span>{/if}
+                </label>
+
+                {#if field.inputType == "textarea"}
+                    <textarea
+                        x-model={field.name}
+                        placeholder={field.placeholder or ""}
+                        rows={field.rows or 3}
+                        class={styles.input}
+                    ></textarea>
+                {:else if field.inputType == "select"}
+                    <select x-model={field.name} class={styles.input}>
+                        {#each field.options as opt}
+                            <option value={opt.value}>{opt.text}</option>
+                        {/each}
+                    </select>
+                {:else}
+                    <input
+                        type={field.inputType}
+                        x-model={field.name}
+                        placeholder={field.placeholder or ""}
+                        class={styles.input}
+                    />
+                {/if}
+
+                {#if field.required}
+                    <p x-show={"errors." .. field.name}
+                       x-text={"errors." .. field.name}
+                       class={styles.error}></p>
+                {/if}
+            </div>
+        {/each}
+
+        <button type="submit" class={styles.button}>
+            {config.submitLabel}
+        </button>
+    </form>
+
+    <!-- Success State -->
+    <div x-show="submitted" x-cloak class="p-6 bg-green-50 dark:bg-green-900 rounded-xl border border-green-200 dark:border-green-700">
+        <h3 class="font-bold text-green-800 dark:text-green-200 text-lg">{config.successTitle}</h3>
+        <p class="text-green-700 dark:text-green-300 text-sm mb-4">{config.successMsg}</p>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 space-y-2 text-sm">
+            {#each fields as field}
+                <div class="flex">
+                    <span class="font-medium text-gray-500 dark:text-gray-400 w-20">{field.label}:</span>
+                    <span class="text-gray-800 dark:text-gray-200" x-text={field.name .. " || '—'"}></span>
+                </div>
+            {/each}
+        </div>
+
+        <button x-on:click={onReset}
+                class="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition">
+            {config.resetLabel}
+        </button>
+    </div>
+</div>`}
+  height={620}
+/>
+
+This technique gives you the full power of server-side rendering combined with rich client-side interactivity.
+
+## Best Practices
+
+### 1. Extract complex class logic to variables
+
+```html
+<script>
+    local isActive = props.isActive
+    local variant = props.variant
+
+    -- Keep template clean by computing classes in script
+    local buttonClasses = {
+        ["btn"] = true,
+        ["btn-active"] = isActive,
+        ["btn-" .. variant] = variant ~= nil
+    }
+</script>
+
+<button class={buttonClasses}>Click me</button>
+```
+
+### 2. Use consistent naming conventions
+
+```html
+<script>
+    -- Good: descriptive, consistent naming
+    local isDisabled = props.disabled or false
+    local hasError = props.error ~= nil
+    local isLoading = props.loading or false
+
+    -- Avoid: inconsistent or unclear naming
+    local disabled = props.d
+    local err = props.e
+</script>
+```
+
+### 3. Provide fallback values
+
+```html
+<script>
+    local variant = props.variant or "default"
+    local size = props.size or "medium"
+
+    local validVariants = { primary = true, secondary = true, default = true }
+    if not validVariants[variant] then
+        variant = "default"
+    end
+</script>
+```

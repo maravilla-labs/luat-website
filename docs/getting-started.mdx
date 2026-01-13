@@ -1,0 +1,263 @@
+---
+sidebar_position: 1
+---
+
+import LuatPlayground from '@site/src/components/LuatPlayground';
+
+# Getting Started
+
+Welcome to Luat! This guide will help you build your first web application using LUAT templating with SvelteKit-style routing.
+
+## What is Luat?
+
+Luat is a Svelte-inspired server-side Lua templating engine for Rust that combines:
+
+- **LUAT Templating** - Server-side rendering with Svelte-like syntax
+- **SvelteKit-Style Routing** - File-based routing with `+page.luat` and `+layout.luat`
+- **Integrated Toolchain** - Auto-configured Tailwind CSS, Sass, and TypeScript
+- **Live Development** - Hot reloading with file watching
+
+## Installation
+
+Choose your preferred installation method:
+
+### npm (Recommended for JS/TS projects)
+
+```bash
+npm install -g @maravilla-labs/luat
+```
+
+### Homebrew (macOS)
+
+```bash
+brew install maravilla-labs/tap/luat
+```
+
+### Shell Script (Linux/macOS)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/maravilla-labs/luat/main/scripts/install.sh | sh
+```
+
+### Cargo (Rust developers)
+
+```bash
+cargo install luat-cli
+```
+
+## Quick Start
+
+### 1. Create Your First Project
+
+```bash
+luat init my-app
+cd my-app
+```
+
+This creates a project with SvelteKit-style structure:
+
+```
+my-app/
+├── luat.toml                    # Project configuration
+├── src/
+│   ├── app.html                 # HTML shell template
+│   ├── routes/
+│   │   ├── +layout.luat         # Root layout
+│   │   ├── +page.luat           # Home page (/)
+│   │   └── +page.server.lua     # Data loading
+│   └── lib/                     # Shared Lua modules
+├── static/                      # Static assets
+└── public/                      # Generated assets (CSS, JS)
+```
+
+### 2. Start Development Server
+
+```bash
+luat dev
+```
+
+Visit http://localhost:3000 to see your app running with live reload!
+
+### 3. Create Your First Page
+
+Create `src/routes/about/+page.luat`:
+
+```html
+<h1>About Us</h1>
+<p>This is the about page.</p>
+<a href="/">Back to Home</a>
+```
+
+Visit http://localhost:3000/about to see your new page.
+
+### 4. Add Data Loading
+
+Create `src/routes/about/+page.server.lua`:
+
+```lua
+function load(ctx)
+    return {
+        title = "About Us",
+        team = {
+            { name = "Alice", role = "Developer" },
+            { name = "Bob", role = "Designer" }
+        }
+    }
+end
+```
+
+Update `src/routes/about/+page.luat`:
+
+```html
+<h1>{props.title}</h1>
+
+<h2>Our Team</h2>
+<ul>
+{#each props.team as member}
+    <li>{member.name} - {member.role}</li>
+{/each}
+</ul>
+```
+
+## Key Concepts
+
+### LUAT Templates
+
+LUAT uses familiar Svelte-like syntax. Try editing the code below:
+
+<LuatPlayground
+  files={[
+    {
+      name: 'main.luat',
+      code: `<script>
+  local Card = require("Card")
+
+  local user = { name = "Alice", role = "Developer" }
+  local isLoggedIn = true
+  local items = {"Apples", "Bananas", "Oranges"}
+</script>
+
+<div class="space-y-4">
+  <!-- Expressions -->
+  <h1 class="text-2xl font-bold">Hello, {user.name}!</h1>
+
+  <!-- Conditionals -->
+  {#if isLoggedIn}
+    <p class="text-green-600">Welcome back!</p>
+  {:else}
+    <p class="text-gray-500">Please log in</p>
+  {/if}
+
+  <!-- Loops -->
+  <ul class="list-disc pl-5">
+    {#each items as item}
+      <li>{item}</li>
+    {/each}
+  </ul>
+
+  <!-- Components -->
+  <Card title="User Info">
+    <p>{user.name} - {user.role}</p>
+  </Card>
+</div>`
+    },
+    {
+      name: 'Card.luat',
+      code: `<script>
+  local title = props.title or "Card"
+</script>
+
+<div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+  <h3 class="font-semibold text-lg mb-2 text-gray-900 dark:text-white">{title}</h3>
+  <div class="text-gray-600 dark:text-gray-300">
+    {@render props.children?.()}
+  </div>
+</div>`
+    }
+  ]}
+  height={320}
+/>
+
+### File-Based Routing
+
+Your file structure defines your URLs:
+
+| File | URL |
+|------|-----|
+| `src/routes/+page.luat` | `/` |
+| `src/routes/about/+page.luat` | `/about` |
+| `src/routes/blog/+page.luat` | `/blog` |
+| `src/routes/blog/[slug]/+page.luat` | `/blog/:slug` |
+
+### Script Blocks
+
+Use script blocks to import components and prepare data:
+
+```html
+<script>
+    local Card = require("Card")
+    local Button = require("Button")
+
+    local title = props.title or "Default Title"
+    local isActive = props.status == "active"
+</script>
+
+<Card title={title}>
+    <Button variant={isActive and "primary" or "secondary"}>
+        Click me
+    </Button>
+</Card>
+```
+
+### HTML Shell (app.html)
+
+The `src/app.html` file provides the document structure:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>%luat.title%</title>
+    <link rel="stylesheet" href="/css/tailwind.css">
+    %luat.head%
+</head>
+<body>
+    %luat.body%
+</body>
+</html>
+```
+
+## CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `luat init [name]` | Create a new project |
+| `luat dev` | Start development server with live reload |
+| `luat build` | Build for production |
+| `luat serve` | Serve production build |
+| `luat watch` | Watch files and rebuild |
+
+## Next Steps
+
+Now that you have a basic understanding, explore these topics:
+
+### Core Concepts
+- [LUAT Templating](/docs/templating/intro) - Deep dive into template syntax
+- [Components](/docs/templating/components) - Building reusable components
+- [Configuration](/docs/templating/configuration) - luat.toml reference
+
+### Routing & Projects
+- [Routing](/docs/application/routing) - File-based routing guide
+- [Project Structure](/docs/application/structure) - Directory organization
+- [Data Loading](/docs/application/functions) - Server-side data loading
+- [API Routes](/docs/application/api-routes) - Building JSON APIs
+
+### Advanced
+- [Toolchain](/docs/templating/toolchain) - Tailwind, Sass, TypeScript
+- [Embedding Luat](/docs/application/embedding) - Using Luat as a Rust library
+
+---
+
+Ready to build something amazing? Continue with the [LUAT Templating guide](/docs/templating/intro) or explore the [Routing documentation](/docs/application/routing).

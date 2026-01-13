@@ -1,0 +1,356 @@
+.playground {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+@media (max-width: 900px) {
+  .playground {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Editor Section */
+.editorSection {
+  background: #1e1e1e;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #333;
+}
+
+.header {
+  background: #2d2d2d;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #333;
+}
+
+.windowControls {
+  display: flex;
+  gap: 6px;
+}
+
+.control {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #555;
+}
+
+.control:nth-child(1) {
+  background: #ff5f56;
+}
+
+.control:nth-child(2) {
+  background: #ffbd2e;
+}
+
+.control:nth-child(3) {
+  background: #27ca3f;
+}
+
+.title {
+  color: #999;
+  font-size: 13px;
+  flex: 1;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #4caf50;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.button:hover:not(:disabled) {
+  background: #45a049;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.buttonSecondary {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 6px;
+  background: #444;
+  color: #ccc;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.buttonSecondary:hover {
+  background: #555;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.editor {
+  overflow: auto;
+}
+
+/* Override CodeMirror styles */
+.editor :global(.cm-editor) {
+  height: 100%;
+  font-size: 14px;
+}
+
+.editor :global(.cm-scroller) {
+  overflow: auto;
+}
+
+.editor :global(.cm-gutters) {
+  background: #1e1e1e;
+  border-right: 1px solid #333;
+}
+
+.contextHeader {
+  background: #2d2d2d;
+  padding: 8px 16px;
+  border-top: 1px solid #333;
+  border-bottom: 1px solid #333;
+}
+
+/* Output Section */
+.outputSection {
+  background: #1e1e1e;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  container-type: inline-size;
+  container-name: output;
+}
+
+.outputHeader {
+  background: #2d2d2d;
+  padding: 10px 16px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.execTime {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #4caf50;
+  font-size: 11px;
+  font-family: 'SF Mono', Monaco, monospace;
+  font-weight: 500;
+}
+
+.execTime .cached {
+  color: #888;
+  font-style: italic;
+}
+
+.execTime .timeSeparator {
+  color: #555;
+  margin: 0 2px;
+}
+
+.execTime .compileInfo {
+  display: inline;
+}
+
+.execTime .renderInfo {
+  display: inline;
+}
+
+/* Hide compile info on small containers, show only render time */
+@container output (max-width: 350px) {
+  .execTime .compileInfo,
+  .execTime .timeSeparator {
+    display: none;
+  }
+}
+
+/* On very small containers, hide all text - just show icon with tooltip */
+@container output (max-width: 250px) {
+  .execTime .compileInfo,
+  .execTime .timeSeparator,
+  .execTime .renderInfo {
+    display: none;
+  }
+}
+
+.output {
+  flex: 1;
+  overflow: hidden;
+  background: white;
+}
+
+.iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px;
+  background: #2d1f1f;
+  color: #ff6b6b;
+  height: 100%;
+  overflow: auto;
+}
+
+.error pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  font-size: 14px;
+  background: #f5f5f5;
+}
+
+/* Dark mode support */
+[data-theme='dark'] .output {
+  background: #1e1e1e;
+}
+
+[data-theme='dark'] .placeholder {
+  background: #2d2d2d;
+  color: #888;
+}
+
+[data-theme='dark'] .iframe {
+  background: #1e1e1e;
+}
+
+/* Tabs for multi-file support */
+.tabs {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px 4px 0 0;
+  background: transparent;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'SF Mono', Monaco, monospace;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tab:hover {
+  background: #3d3d3d;
+  color: #ccc;
+}
+
+.tabActive {
+  background: #1e1e1e;
+  color: #fff;
+}
+
+/* Output Tabs */
+.outputTabs {
+  display: flex;
+  gap: 4px;
+}
+
+.outputTab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.outputTab:hover {
+  background: #3d3d3d;
+  color: #ccc;
+}
+
+.outputTabActive {
+  background: #3d3d3d;
+  color: #fff;
+}
+
+/* HTML Viewer */
+.htmlViewer {
+  height: 100%;
+  overflow: auto;
+  background: #1e1e1e;
+}
+
+.htmlViewer :global(.cm-editor) {
+  height: 100%;
+  font-size: 13px;
+}
+
+.htmlViewer :global(.cm-scroller) {
+  overflow: auto;
+}
+
+.htmlViewer :global(.cm-gutters) {
+  background: #1e1e1e;
+  border-right: 1px solid #333;
+}

@@ -1,0 +1,150 @@
+.codeContainer {
+  background: #1e1e1e;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border: 1px solid #333;
+  max-width: 600px;
+  transition: all 0.3s ease;
+}
+
+.codeContainer:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+}
+
+.codeHeader {
+  background: #2d2d2d;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #333;
+}
+
+.windowControls {
+  display: flex;
+  gap: 8px;
+}
+
+.control {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #555;
+}
+
+.control:nth-child(1) {
+  background: #ff5f56;
+}
+
+.control:nth-child(2) {
+  background: #ffbd2e;
+}
+
+.control:nth-child(3) {
+  background: #27ca3f;
+}
+
+.filename {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ccc;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.fileIcon {
+  font-size: 16px;
+}
+
+.code {
+  padding: 20px;
+  margin: 0;
+  overflow-x: auto;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.code code {
+  white-space: pre;
+}
+
+/* Syntax highlighting */
+.code :global(.comment) {
+  color: #6a9955;
+  font-style: italic;
+}
+
+.code :global(.tag) {
+  color: #569cd6;
+}
+
+.code :global(.keyword) {
+  color: #c586c0;
+  font-weight: 500;
+}
+
+.code :global(.directive) {
+  color: #ffd700;
+  font-weight: 500;
+}
+
+.code :global(.string) {
+  color: #ce9178;
+}
+
+.code :global(.literal) {
+  color: #b5cea8;
+}
+
+.code :global(.expression) {
+  color: #ffd700;
+}
+
+.code :global(.component) {
+  color: #4ec9b0;
+  font-weight: 500;
+}
+
+@media screen and (max-width: 768px) {
+  .codeContainer {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  
+  .code {
+    padding: 16px;
+    font-size: 12px;
+    overflow-x: auto;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .codeContainer {
+    transform: none !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+  
+  .code {
+    padding: 12px;
+    font-size: 11px;
+  }
+  
+  .filename {
+    font-size: 12px;
+  }
+  
+  .fileIcon {
+    font-size: 14px;
+  }
+  
+  .windowControls .control {
+    width: 10px;
+    height: 10px;
+  }
+}

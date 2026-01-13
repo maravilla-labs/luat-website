@@ -1,0 +1,457 @@
+import LuatPlayground from '@site/src/components/LuatPlayground';
+
+# Script Blocks
+
+Script blocks in LUAT templates allow you to write Lua code that executes during template compilation and rendering. There are two types of script blocks, each with different execution contexts and purposes.
+
+## Types of Script Blocks
+
+### Regular Script Blocks
+
+Regular `<script>` blocks execute on every template render. Use them for:
+
+- Importing components and modules
+- Preparing data for rendering  
+- Computing derived values
+- Setting up local variables
+
+```html
+<script>
+    local Helper = require("lib/utils/helper")
+    local Button = require("components/Button")
+
+    local title = props.title or "Default Title"
+    local isActive = props.status == "active"
+    local formattedDate = Helper.formatDate(props.createdAt)
+</script>
+
+<div class="card {isActive and 'active' or ''}">
+    <h2>{title}</h2>
+    <p>Created: {formattedDate}</p>
+    <Button>Edit</Button>
+</div>
+```
+
+<LuatPlayground
+  code={`<script>
+local title = "My Dashboard"
+local status = "active"
+local createdAt = "2024-01-15"
+
+local isActive = status == "active"
+local statusClass = isActive and "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200" or "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+</script>
+
+<div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">{title}</h2>
+        <span class={"px-3 py-1 rounded-full text-sm " .. statusClass}>
+            {isActive and "Active" or "Inactive"}
+        </span>
+    </div>
+    <p class="text-gray-600 dark:text-gray-300">Created: {createdAt}</p>
+</div>`}
+  height={320}
+/>
+
+### Module Script Blocks
+
+Module script blocks (`<script module>`) execute once when the module is first loaded. Use them for:
+
+- Exporting module metadata and utilities
+- Defining constants and configuration
+- Setting up module-level functions
+
+```html
+<script module>
+    local type = "component:user-card"
+    
+    local function validateUser(user)
+        return user and user.name and user.email
+    end
+    
+    exports.type = type
+    exports.validateUser = validateUser
+</script>
+
+<script>
+    local user = props.user
+    local isValid = validateUser(user)
+</script>
+
+{#if isValid}
+    <div class="user-card">
+        <h3>{user.name}</h3>
+        <p>{user.email}</p>
+    </div>
+{:else}
+    <div class="error">Invalid user data</div>
+{/if}
+```
+
+## Importing Modules
+
+### Component Imports
+
+Import other LUAT components using `require()`:
+
+```html
+<script>
+    local Card = require("components/Card")
+    local Button = require("components/Button") 
+    local Icon = require("components/Icon")
+</script>
+
+<Card title="User Profile">
+    <Icon name="user" />
+    <Button variant="primary">Edit Profile</Button>
+</Card>
+```
+
+### Utility Imports
+
+Import Lua modules and utilities:
+
+```html
+<script>
+    local json = require("json")
+    local helper = require("lib/utils/helper")
+    local dateUtils = require("lib/utils/date")
+    
+    local userData = json.encode(props.user)
+    local avatarUrl = helper.resolveAsset(props.user.avatar)
+    local formattedDate = dateUtils.format(props.user.createdAt, "MMM DD, YYYY")
+</script>
+```
+
+## Context Access
+
+### Getting Context Data
+
+Access shared context using the `getContext()` function:
+
+```html
+<script>
+    local pageContext = getContext("pageContext")
+    local currentNode = getContext("currentNode")
+    local currentTheme = pageContext.currentTheme
+    
+    local cssUrl = pageContext.root_path .. "/public/bundle/app.css"
+    local title = currentNode.properties.title
+</script>
+
+<div data-theme={currentTheme}>
+    <h1>{title}</h1>
+    <link rel="stylesheet" href={cssUrl}>
+</div>
+```
+
+### Available Context Variables
+
+Common context variables include:
+
+- **`pageContext`** - Page-level configuration and URLs
+- **`currentNode`** - Current content node data and properties  
+- **`currentTheme`** - Active theme settings
+
+```html
+<script>
+    local pageContext = getContext("pageContext")
+    local currentNode = getContext("currentNode")
+    
+    -- Page context properties
+    local rootPath = pageContext.root_path
+    local isDev = pageContext.query.dev
+    local isPreview = pageContext.query.preview
+    
+    -- Current node properties  
+    local nodeTitle = currentNode.properties.title
+    local nodeType = currentNode.content_type
+    local nodeName = currentNode.name
+</script>
+```
+
+## Working with Props
+
+### Accessing Props
+
+All props passed to the component are available in the global `props` table:
+
+```html
+<script>
+    local title = props.title
+    local subtitle = props.subtitle
+    local image = props.image
+    local items = props.items or {}
+    local showActions = props.showActions or false
+</script>
+```
+
+### Derived Values
+
+Compute derived values from props using the `$derived()` function. This syntax marks values that are computed from other data:
+
+```html
+<script>
+    local user = props.user
+    local isAdmin = $derived(user and user.role == "admin")
+    local displayName = $derived(user and (user.displayName or user.name) or "Guest")
+    local avatarUrl = $derived(user and user.avatar or "/default-avatar.png")
+
+    local itemCount = $derived(props.items and #props.items or 0)
+    local hasItems = $derived(itemCount > 0)
+</script>
+
+<div class="user-info">
+    <img src={avatarUrl} alt={displayName}>
+    <h2>{displayName}</h2>
+    {#if isAdmin}
+        <span class="admin-badge">Admin</span>
+    {/if}
+    <p>{itemCount} items</p>
+</div>
+```
+
+<LuatPlayground
+  code={`<script>
+local user = {
+    name = "Alice",
+    displayName = "Alice Johnson",
+    role = "admin",
+    avatar = "https://i.pravatar.cc/100"
+}
+
+local items = {
+    { id = 1, name = "Task 1" },
+    { id = 2, name = "Task 2" },
+    { id = 3, name = "Task 3" }
+}
+
+local isAdmin = $derived(user and user.role == "admin")
+local displayName = $derived(user and (user.displayName or user.name) or "Guest")
+local avatarUrl = $derived(user and user.avatar or "/default-avatar.png")
+local itemCount = $derived(#items)
+local hasItems = $derived(itemCount > 0)
+</script>
+
+<div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow flex items-center gap-4">
+    <img src={avatarUrl} alt={displayName} class="w-16 h-16 rounded-full">
+    <div>
+        <div class="flex items-center gap-2">
+            <h2 class="text-xl font-bold dark:text-gray-100">{displayName}</h2>
+            {#if isAdmin}
+                <span class="px-2 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs rounded-full">Admin</span>
+            {/if}
+        </div>
+        <p class="text-gray-600 dark:text-gray-300">{itemCount} items assigned</p>
+    </div>
+</div>`}
+  height={400}
+/>
+
+## Advanced Patterns
+
+### Conditional Imports
+
+Dynamically import components based on conditions:
+
+```html
+<script>
+    local componentType = props.type or "default"
+    
+    local Component
+    if componentType == "hero" then
+        Component = require("components/Hero")
+    elseif componentType == "gallery" then  
+        Component = require("components/Gallery")
+    else
+        Component = require("components/DefaultComponent")
+    end
+</script>
+
+<Component {...props} />
+```
+
+### Helper Functions
+
+Define utility functions in script blocks:
+
+```html
+<script>
+    local function formatPrice(price)
+        return string.format("$%.2f", price)
+    end
+
+    local function getStatusClass(status)
+        if status == "active" then
+            return "status-active"
+        elseif status == "pending" then
+            return "status-pending"
+        else
+            return "status-inactive"
+        end
+    end
+
+    local price = formatPrice(props.price)
+    local statusClass = getStatusClass(props.status)
+</script>
+
+<div class="product {statusClass}">
+    <h3>{props.name}</h3>
+    <p class="price">{price}</p>
+</div>
+```
+
+<LuatPlayground
+  code={`<script>
+local function formatPrice(price)
+    return string.format("$%.2f", price)
+end
+
+local function getStatusClass(status)
+    if status == "active" then
+        return "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
+    elseif status == "pending" then
+        return "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200"
+    else
+        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+    end
+end
+
+local products = {
+    { name = "Laptop Pro", price = 1299.99, status = "active" },
+    { name = "Wireless Mouse", price = 49.50, status = "pending" },
+    { name = "USB Hub", price = 29.99, status = "inactive" }
+}
+</script>
+
+<div class="space-y-3">
+{#each products as product}
+    {@local formattedPrice = formatPrice(product.price)}
+    {@local statusClass = getStatusClass(product.status)}
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow flex justify-between items-center">
+        <div>
+            <h3 class="font-bold dark:text-gray-100">{product.name}</h3>
+            <p class="text-green-600 font-semibold">{formattedPrice}</p>
+        </div>
+        <span class={"px-3 py-1 rounded-full text-sm " .. statusClass}>
+            {product.status}
+        </span>
+    </div>
+{/each}
+</div>`}
+  height={420}
+/>
+
+### Error Handling
+
+Handle errors gracefully in script blocks:
+
+```html
+<script>
+    local user = props.user
+    local hasValidUser = user and user.name and user.email
+    
+    local function safeAccess(obj, path)
+        local current = obj
+        for key in string.gmatch(path, "([^.]+)") do
+            if current and type(current) == "table" then
+                current = current[key]
+            else
+                return nil
+            end
+        end
+        return current
+    end
+    
+    local profileImage = safeAccess(user, "profile.avatar.url")
+    local displayName = safeAccess(user, "profile.displayName") or 
+                       safeAccess(user, "name") or "Unknown User"
+</script>
+
+{#if hasValidUser}
+    <div class="user-profile">
+        {#if profileImage}
+            <img src={profileImage} alt={displayName}>
+        {/if}
+        <h2>{displayName}</h2>
+    </div>
+{:else}
+    <div class="error">Invalid user data</div>
+{/if}
+```
+
+## Best Practices
+
+### 1. Keep script blocks focused
+
+Separate concerns between module and regular scripts:
+
+```html
+<!-- Module script: exports and constants -->
+<script module>
+    local TYPE = "component:product-card"
+    local DEFAULT_CURRENCY = "USD"
+    
+    exports.type = TYPE
+    exports.currency = DEFAULT_CURRENCY
+</script>
+
+<!-- Regular script: rendering logic -->
+<script>
+    local price = props.price
+    local currency = props.currency or DEFAULT_CURRENCY
+    local formattedPrice = formatCurrency(price, currency)
+</script>
+```
+
+### 2. Use meaningful variable names
+
+```html
+<script>
+    -- Good: descriptive names
+    local userName = props.user.name
+    local isLoggedIn = props.user ~= nil
+    local itemCount = #props.items
+    
+    -- Avoid: cryptic abbreviations
+    local un = props.user.name
+    local logged = props.user ~= nil
+    local cnt = #props.items
+</script>
+```
+
+### 3. Handle edge cases
+
+```html
+<script>
+    local items = props.items or {}
+    local user = props.user
+    
+    -- Safe property access
+    local userName = user and user.name or "Guest"
+    local userEmail = user and user.email or ""
+    
+    -- Safe array operations
+    local firstItem = items[1]
+    local itemCount = #items
+    local hasItems = itemCount > 0
+</script>
+```
+
+### 4. Extract complex logic
+
+Move complex logic to utility modules:
+
+```html
+<!-- Good: Clean script block -->
+<script>
+    local UserHelper = require("lib/helpers/UserHelper")
+    local user = props.user
+    
+    local userDisplayData = UserHelper.prepareUserDisplay(user)
+    local permissions = UserHelper.getUserPermissions(user)
+</script>
+
+<!-- Instead of cluttering the script with complex logic -->
+```

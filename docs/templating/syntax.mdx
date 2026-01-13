@@ -1,0 +1,633 @@
+import LuatPlayground from '@site/src/components/LuatPlayground';
+
+# Template Syntax
+
+LUAT uses a Svelte-inspired syntax for expressing dynamic content, control flow, and component composition.
+
+## Expressions
+
+### Text Interpolation
+
+Use curly braces to output dynamic content. Values are automatically HTML-escaped for security:
+
+```html
+<h1>{props.title}</h1>
+<p>Welcome, {props.user.name}!</p>
+<span>Price: ${props.price}</span>
+```
+
+<LuatPlayground
+  code={`<script>
+local title = "Welcome to LUAT"
+local user = { name = "Alice" }
+local price = 29.99
+</script>
+
+<h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">{title}</h1>
+<p class="text-gray-600 dark:text-gray-300">Welcome, {user.name}!</p>
+<span class="text-green-600 font-semibold">${'$'}{price}</span>`}
+  height={250}
+/>
+
+### Raw HTML
+
+Use `{@html}` to output unescaped HTML content:
+
+<LuatPlayground
+  code={`<script>
+local richContent = [[
+<strong>Bold text</strong> and <em>italic text</em>
+<ul>
+  <li>First item</li>
+  <li>Second item</li>
+</ul>
+]]
+</script>
+
+<div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+    {@html richContent}
+</div>`}
+  height={250}
+/>
+
+⚠️ **Warning**: Only use `{@html}` with trusted content to avoid XSS vulnerabilities.
+
+### Attributes
+
+Dynamic attributes work the same as text interpolation:
+
+<LuatPlayground
+  code={`<script>
+local imageUrl = "https://picsum.photos/200/100"
+local imageAlt = "Random placeholder image"
+local extraClass = "shadow-lg"
+local isLoading = false
+</script>
+
+<div class="space-y-4">
+    <img src={imageUrl} alt={imageAlt} class="rounded">
+
+    <div class={"card p-4 bg-white dark:bg-gray-800 rounded " .. extraClass}>
+        This card has dynamic classes
+    </div>
+
+    <button
+        disabled={isLoading}
+        class="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
+    >
+        {isLoading and "Loading..." or "Submit"}
+    </button>
+</div>`}
+  height={320}
+/>
+
+### Attribute Shorthand
+
+When an attribute name is the same as the variable holding its value, you can use a shorthand:
+
+<LuatPlayground
+  code={`<script>
+local title = "Click here for more info"
+local href = "https://example.com"
+</script>
+
+<div class="space-y-2">
+    <!-- Shorthand syntax -->
+    <a {href} {title} class="text-blue-500 underline">
+        Link with shorthand attributes
+    </a>
+
+    <!-- Equivalent to: -->
+    <a href={href} title={title} class="text-blue-500 underline">
+        Link with explicit attributes
+    </a>
+</div>`}
+  height={220}
+/>
+
+For more advanced techniques, including conditional classes and integrating with client-side libraries, see the [Dynamic Attributes & Classes](./dynamic-attributes.mdx) guide.
+
+## Control Flow
+
+### If Blocks
+
+Conditional rendering with `{#if}`, `{:else}`, and `{/if}`:
+
+```html
+{#if props.user.isAdmin}
+    <div class="admin-panel">
+        <h2>Admin Dashboard</h2>
+    </div>
+{:else}
+    <div class="user-panel">
+        <h2>User Dashboard</h2>
+    </div>
+{/if}
+```
+
+<LuatPlayground
+  code={`<script>
+local isAdmin = true  -- Try changing to false!
+</script>
+
+{#if isAdmin}
+    <div class="bg-purple-100 dark:bg-purple-900 p-4 rounded-lg border border-purple-300 dark:border-purple-700">
+        <h2 class="text-lg font-bold text-purple-800 dark:text-purple-200">Admin Dashboard</h2>
+        <p class="text-purple-600 dark:text-purple-300">Full access granted</p>
+    </div>
+{:else}
+    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg border border-gray-300 dark:border-gray-600">
+        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">User Dashboard</h2>
+        <p class="text-gray-600 dark:text-gray-300">Limited access</p>
+    </div>
+{/if}`}
+  height={280}
+/>
+
+Multiple conditions with `{:else if}`:
+
+```html
+{#if props.status === "loading"}
+    <div class="spinner">Loading...</div>
+{:else if props.status === "error"}
+    <div class="error">Something went wrong</div>
+{:else}
+    <div class="content">{props.data}</div>
+{/if}
+```
+
+### Each Blocks
+
+Iterate over arrays with `{#each}`, `{:empty}`, and `{/each}`:
+
+```html
+<ul>
+{#each props.items as item}
+    <li>{item.name}</li>
+{/each}
+</ul>
+```
+
+<LuatPlayground
+  code={`<script>
+local tasks = {
+    { name = "Learn LUAT", done = true },
+    { name = "Build components", done = true },
+    { name = "Deploy app", done = false }
+}
+</script>
+
+<ul class="space-y-2">
+{#each tasks as task, index}
+    <li class="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <span class="w-6 h-6 rounded-full bg-blue-500 text-white text-sm flex items-center justify-center">
+            {index + 1}
+        </span>
+        <span class={task.done and "line-through text-gray-400 dark:text-gray-500" or "text-gray-800 dark:text-gray-100"}>
+            {task.name}
+        </span>
+        {#if task.done}
+            <span class="ml-auto text-green-500">✓</span>
+        {/if}
+    </li>
+{:empty}
+    <li class="text-gray-500 dark:text-gray-400 italic">No tasks yet</li>
+{/each}
+</ul>`}
+  height={320}
+/>
+
+With index:
+
+```html
+<ol>
+{#each props.items as item, index}
+    <li>{index + 1}. {item.name}</li>
+{/each}
+</ol>
+```
+
+With empty state:
+
+```html
+<div class="item-list">
+{#each props.items as item}
+    <div class="item">{item.name}</div>
+{:empty}
+    <div class="no-items">No items found</div>
+{/each}
+</div>
+```
+
+## Props Spread Operator
+
+The spread operator (`...`) allows you to pass all properties from a table to a component. This is useful when you want to pass multiple properties at once without listing each one individually.
+
+```html
+<script>
+    local Button = require("components/Button")
+    local buttonProps = { label = "Save", type = "button" }
+</script>
+
+<Button {...buttonProps} />
+```
+
+In this example, all key-value pairs from `buttonProps` will be passed to the `Button` component.
+
+<LuatPlayground
+  files={[
+    {
+      name: 'main.luat',
+      code: `<script>
+local Badge = require("Badge")
+local badgeProps = { label = "New", color = "green" }
+</script>
+
+<div class="space-y-4">
+    <Badge {...badgeProps} />
+    <Badge label="Sale" color="red" />
+    <Badge label="Popular" color="blue" />
+</div>`
+    },
+    {
+      name: 'Badge.luat',
+      code: `<script>
+local label = props.label or "Badge"
+local color = props.color or "gray"
+
+local colors = {
+    green = "bg-green-100 text-green-800",
+    red = "bg-red-100 text-red-800",
+    blue = "bg-blue-100 text-blue-800",
+    gray = "bg-gray-100 text-gray-800"
+}
+local classes = colors[color] or colors.gray
+</script>
+
+<span class={"px-3 py-1 rounded-full text-sm font-medium " .. classes}>
+    {label}
+</span>`
+    }
+  ]}
+  height={280}
+/>
+
+### Combining Multiple Spreads
+
+You can use multiple spread operators in a single component:
+
+```html
+<script>
+    local Card = require("components/Card")
+    local baseProps = { title = "My Card", size = "medium" }
+    local themeProps = { variant = "primary", outlined = true }
+</script>
+
+<Card {...baseProps} {...themeProps} />
+```
+
+<LuatPlayground
+  files={[
+    {
+      name: 'main.luat',
+      code: `<script>
+local Button = require("Button")
+
+local baseProps = { size = "medium", disabled = false }
+local styleProps = { variant = "primary", rounded = true }
+</script>
+
+<div class="space-y-3">
+    <Button {...baseProps} {...styleProps}>
+        Combined Props
+    </Button>
+
+    <Button {...baseProps} variant="secondary">
+        Override Variant
+    </Button>
+
+    <Button {...styleProps} size="large">
+        Override Size
+    </Button>
+</div>`
+    },
+    {
+      name: 'Button.luat',
+      code: `<script>
+local size = props.size or "medium"
+local variant = props.variant or "primary"
+local rounded = props.rounded or false
+local disabled = props.disabled or false
+
+local sizes = {
+    small = "px-2 py-1 text-sm",
+    medium = "px-4 py-2",
+    large = "px-6 py-3 text-lg"
+}
+
+local variants = {
+    primary = "bg-blue-500 text-white hover:bg-blue-600",
+    secondary = "bg-gray-200 text-gray-800 hover:bg-gray-300"
+}
+
+local classes = sizes[size] .. " " .. variants[variant]
+if rounded then classes = classes .. " rounded-full" else classes = classes .. " rounded" end
+if disabled then classes = classes .. " opacity-50 cursor-not-allowed" end
+</script>
+
+<button class={classes} disabled={disabled}>
+    {@render props.children?.()}
+</button>`
+    }
+  ]}
+  height={350}
+/>
+
+### Combining Spreads with Regular Props
+
+Spread operators can be used together with regular prop assignments. Properties defined directly will override those from spread objects:
+
+```html
+<script>
+    local Button = require("components/Button")
+    local baseProps = { label = "Default", type = "button" }
+</script>
+
+<Button {...baseProps} label="Submit" />
+```
+
+In this case, the button will render with `label="Submit"` (from the direct prop) and `type="button"` (from the spread).
+
+### Precedence Rules
+
+When multiple properties with the same name are specified, the precedence is as follows:
+
+1. Direct props (highest precedence)
+2. Spread operators, with later spreads overriding earlier ones
+
+```html
+<script>
+    local baseProps = { type = "button", size = "medium" }
+    local overrideProps = { size = "large" }
+</script>
+
+<!-- Results in type="reset" (direct prop), size="large" (from overrideProps) -->
+<Button {...baseProps} type="reset" {...overrideProps} />
+```
+
+## Declaring Local Variables
+
+The `{@local}` tag allows you to declare local variables directly within a block's scope. This is useful for creating derived values that you want to reference multiple times, making your templates cleaner and more efficient without needing a separate `<script>` block.
+
+The variable is only available inside the block where it is defined.
+
+<LuatPlayground
+  code={`<script>
+local products = {
+    { name = "Laptop", price = 999, discount = 0.1, stock = 5 },
+    { name = "Mouse", price = 49, discount = 0, stock = 0 },
+    { name = "Keyboard", price = 149, discount = 0.2, stock = 12 }
+}
+</script>
+
+<div class="space-y-3">
+{#each products as product}
+    {@local finalPrice = product.price * (1 - product.discount)}
+    {@local inStock = product.stock > 0}
+
+    <div class={"p-3 rounded-lg " .. (inStock and "bg-white dark:bg-gray-800" or "bg-gray-100 dark:bg-gray-700")}>
+        <h3 class="font-bold dark:text-gray-100">{product.name}</h3>
+        <p class="text-green-600">${'$'}{finalPrice}</p>
+        <span class={inStock and "text-green-500" or "text-red-500"}>
+            {inStock and "In Stock" or "Out of Stock"}
+        </span>
+    </div>
+{/each}
+</div>`}
+  height={380}
+/>
+
+### Usage Constraints
+
+The `{@local}` tag must be an immediate child of a block or component. It cannot be used at the top level of a template.
+
+```html
+<!-- Invalid: {@local} cannot be a top-level tag -->
+{@local myVar = 'this will cause an error'}
+```
+
+## Sensitive Content
+
+For logging and debugging purposes, mark sensitive content blocks that should be tracked:
+
+### Sensitive If Blocks
+
+```html
+{!if props.showSecret}
+    <!-- This block will be logged as sensitive -->
+    <div class="secret">
+        <p>API Key: {props.apiKey}</p>
+    </div>
+{/if}
+```
+
+### Sensitive Each Blocks
+
+```html
+{!each props.secrets as secret}
+    <div class="secret-item">{secret.value}</div>
+{/each}
+```
+
+These blocks function identically to regular control flow but are marked for special handling in logs and debugging tools.
+
+## Comments
+
+### HTML Comments
+
+Standard HTML comments are preserved in the output:
+
+```html
+<!-- This comment appears in the rendered HTML -->
+<div>Content</div>
+```
+
+### Template Comments
+
+LUAT comments are removed during compilation:
+
+```html
+{/* This comment is only visible in the source */}
+<div>Content</div>
+```
+
+## Whitespace Handling
+
+LUAT preserves whitespace in your templates, but you can control it:
+
+### Compact Syntax
+
+```html
+<span>{props.firstName}</span> <span>{props.lastName}</span>
+```
+
+### Multi-line with Preserved Formatting
+
+```html
+<div class="poem">
+    {props.line1}
+    {props.line2}
+    {props.line3}
+</div>
+```
+
+## Advanced Expressions
+
+### Lua Expressions
+
+Any valid Lua expression can be used within braces:
+
+<LuatPlayground
+  code={`<script>
+local price = 29.99
+local quantity = 3
+local title = "hello world"
+local isActive = true
+</script>
+
+<div class="space-y-3 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+    <!-- Arithmetic -->
+    <p class="dark:text-gray-200">Total: <strong>${'$'}{price * quantity}</strong></p>
+
+    <!-- String operations -->
+    <h2 class="text-xl font-bold dark:text-gray-100">{string.upper(title)}</h2>
+
+    <!-- Conditional expressions -->
+    <span class={isActive and "text-green-500" or "text-red-500"}>
+        Status: {isActive and "Active" or "Inactive"}
+    </span>
+
+    <!-- Math functions -->
+    <p class="dark:text-gray-200">Rounded: {math.floor(price)}</p>
+</div>`}
+  height={300}
+/>
+
+### Object Access
+
+Access nested properties with dot notation:
+
+```html
+<div>
+    <h2>{props.user.profile.displayName}</h2>
+    <img src={props.user.profile.avatar.url}>
+    <p>{props.user.settings.theme}</p>
+</div>
+```
+
+<LuatPlayground
+  code={`<script>
+local user = {
+    profile = {
+        displayName = "Alice Johnson",
+        avatar = { url = "https://i.pravatar.cc/100" }
+    },
+    settings = {
+        theme = "dark"
+    }
+}
+</script>
+
+<div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow space-y-3">
+    <div class="flex items-center gap-3">
+        <img src={user.profile.avatar.url} class="w-12 h-12 rounded-full">
+        <h2 class="text-xl font-bold dark:text-gray-100">{user.profile.displayName}</h2>
+    </div>
+    <p class="text-gray-600 dark:text-gray-300">Theme: {user.settings.theme}</p>
+</div>`}
+  height={300}
+/>
+
+### Array Access
+
+```html
+<script>
+    local items = props.items
+    local itemCount = #items
+</script>
+
+<div>
+    <h3>First item: {items[1].name}</h3>
+    <p>Item count: {itemCount}</p>
+</div>
+```
+
+<LuatPlayground
+  code={`<script>
+local items = {
+    { name = "Apple", price = 1.50 },
+    { name = "Banana", price = 0.75 },
+    { name = "Cherry", price = 3.00 }
+}
+local itemCount = #items
+</script>
+
+<div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow space-y-2">
+    <h3 class="font-bold dark:text-gray-100">First item: {items[1].name}</h3>
+    <p class="text-gray-600 dark:text-gray-300">Total items: {itemCount}</p>
+    <p class="text-green-600">First price: ${'$'}{items[1].price}</p>
+</div>`}
+  height={270}
+/>
+
+## Special Characters
+
+Escape special characters when needed:
+
+```html
+<!-- Literal braces -->
+<pre>Use \{curly braces\} for expressions</pre>
+
+<!-- Quotes in attributes -->
+<button onclick="alert('Hello {props.name}')">Click me</button>
+```
+
+## Best Practices
+
+### 1. Keep expressions simple
+```html
+<!-- Good -->
+<span>{props.price}</span>
+
+<!-- Better extracted to script -->
+<script>
+    local formattedPrice = formatCurrency(props.price)
+</script>
+<span>{formattedPrice}</span>
+```
+
+### 2. Use meaningful variable names
+```html
+<script>
+    local userName = props.user and props.user.name or "Guest"
+    local isLoggedIn = props.user ~= nil
+</script>
+
+<div class="header">
+    {#if isLoggedIn}
+        <span>Welcome, {userName}!</span>
+    {/if}
+</div>
+```
+
+### 3. Handle nil/undefined gracefully
+```html
+<!-- Safe property access -->
+<img src={props.user and props.user.avatar or "/default-avatar.png"}>
+
+<!-- With helper functions -->
+<script>
+    local avatarUrl = getAvatarUrl(props.user)
+</script>
+<img src={avatarUrl}>
+```

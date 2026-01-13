@@ -1,0 +1,138 @@
+---
+slug: luat-wasm-playground
+title: "Luat in Your Browser: The Complete Engine Compiled to WebAssembly"
+authors: [labertasch]
+tags: [luat, wasm, webassembly, playground, documentation]
+description: We compiled the entire Luat engine to WebAssembly, bringing interactive playgrounds to our documentation and landing page.
+date: 2025-12-29
+---
+
+import LuatPlayground from '@site/src/components/LuatPlayground';
+
+# Luat in Your Browser: The Complete Engine Compiled to WebAssembly
+
+Today we're excited to share something we've been working on for months: **the complete Luat engine running in your browser via WebAssembly**.
+
+{/* truncate */}
+
+## The Challenge
+
+When we started building documentation for Luat, we wanted more than static code examples. We wanted developers to *experience* Luat - to edit templates, see results instantly, and truly understand the power of Lua-powered templating.
+
+The challenge? Luat is written in Rust and depends on the mlua crate, which binds to Lua's C implementation. This isn't your typical "compile to WASM" scenario.
+
+## The Solution: Emscripten + WebAssembly
+
+After weeks of experimentation, we successfully compiled the entire Luat stack to WebAssembly using Emscripten:
+
+- **Lua VM** - The complete Lua 5.4 runtime
+- **mlua bindings** - Rust-to-Lua bridge
+- **Luat parser** - Our Svelte-inspired template parser
+- **Luat compiler** - Template-to-Lua bytecode compilation
+- **Luat engine** - The complete rendering engine
+
+The result? A ~2.5MB WASM bundle that runs the *exact same code* as the server-side Luat engine.
+
+## Interactive Documentation
+
+Every code example in our documentation is now interactive. Try it yourself - edit the code below and click "Run":
+
+<LuatPlayground
+  files={[
+    {
+      name: 'main.luat',
+      code: `<script>
+  local products = require("products")
+  local ProductCard = require("ProductCard")
+</script>
+
+<section class="p-4">
+  <h1 class="text-2xl font-bold mb-4">Our Products</h1>
+  <div class="grid grid-cols-2 gap-4">
+    {#each products as product}
+      <ProductCard
+        name={product.name}
+        price={product.price}
+        inStock={product.inStock}
+      />
+    {/each}
+  </div>
+</section>`
+    },
+    {
+      name: 'ProductCard.luat',
+      code: `<script>
+  local name = props.name or "Product"
+  local price = props.price or 0
+  local inStock = props.inStock
+</script>
+
+<div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+  <h3 class="font-semibold text-lg text-gray-900 dark:text-white">{name}</h3>
+  <p class="text-green-600 dark:text-green-400 font-bold">\${price}</p>
+  {#if inStock}
+    <span class="text-xs text-green-500 dark:text-green-400">In Stock</span>
+  {:else}
+    <span class="text-xs text-red-500 dark:text-red-400">Out of Stock</span>
+  {/if}
+</div>`
+    },
+    {
+      name: 'products.lua',
+      code: `return {
+  { name = "Laptop", price = 999, inStock = true },
+  { name = "Keyboard", price = 79, inStock = true },
+  { name = "Monitor", price = 299, inStock = false },
+  { name = "Mouse", price = 49, inStock = true }
+}`
+    }
+  ]}
+  height={280}
+/>
+
+Click "Run" and watch your changes render instantly - no server roundtrip, no installation, no setup.
+
+## Powering the Landing Page
+
+Check out the [See It In Action](/) section on our homepage. Those aren't static code snippets - they're fully interactive playgrounds powered by the same WASM engine, compiling and rendering Luat templates right in your browser.
+
+## Technical Deep Dive
+
+For those curious about the implementation:
+
+### Memory Management
+
+We use Emscripten's memory management with a custom JavaScript wrapper that handles:
+- String passing between JS and WASM
+- Template caching in a thread-local engine instance
+- Proper cleanup to prevent memory leaks
+
+### Performance
+
+Despite running in the browser, performance is excellent:
+- Template compilation: under 1ms for multi-file projects
+- Rendering: around 2ms for typical templates with components
+- Initial WASM load: depends on network, but cached after first visit
+
+Note: The playground runs Lua dynamically rather than compiling to bytecode ahead of time. In production server environments, Luat pre-compiles templates to Lua bytecode for even faster execution.
+
+## What This Means for You
+
+1. **Try Before You Install** - Experience Luat without any setup
+2. **Learn Interactively** - Modify examples and see results instantly
+3. **Share Snippets** - Soon: shareable playground links
+4. **Offline Documentation** - The playground works offline once cached
+
+## Our Journey
+
+This wasn't easy. We spent countless hours debugging Emscripten configurations, wrestling with memory alignment issues, and optimizing bundle size. But seeing Luat run in the browser - the same engine that powers production applications - makes it all worth it.
+
+This is what we love about building Luat: pushing boundaries and making powerful tools accessible to everyone.
+
+## Try It Now
+
+Head to our [documentation](/docs/getting-started) and start playing with the interactive examples. No installation required - just your curiosity.
+
+---
+
+Questions about the WASM implementation? Reach out [@thelabertasch](https://x.com/thelabertasch) on X.

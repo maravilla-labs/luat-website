@@ -1,0 +1,182 @@
+.whySection {
+  padding: 6rem 0;
+  background-color: #f1f5f9;
+  text-align: center;
+}
+
+.header {
+  margin-bottom: 3rem;
+}
+
+.heading {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #374151;
+  margin-bottom: 1rem;
+}
+
+.subheading {
+  font-size: 1.125rem;
+  color: #6b7280;
+}
+
+.reasonsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.reasonCard {
+  background-color: #fff;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  border-radius: 12px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.reasonCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 25px rgba(0, 0, 0, 0.15);
+}
+
+.reasonIcon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #ff6b6b;
+}
+
+.reasonTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.reasonDescription {
+  font-size: 1rem;
+  color: #4b5563;
+  margin-bottom: 0.75rem;
+}
+
+.reasonHighlight {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #10b981;
+  text-transform: uppercase;
+}
+
+.cta {
+  background: #0f766e;
+  color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.ctaTitle {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.ctaDescription {
+  font-size: 1.125rem;
+  margin-bottom: 1.5rem;
+}
+
+.ctaButtons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.ctaPrimary, .ctaSecondary {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.ctaPrimary {
+  background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+  color: white;
+}
+
+.ctaPrimary:hover {
+  background: linear-gradient(45deg, #ee5a24, #ff6b6b);
+  transform: translateY(-2px);
+  color: white;
+  text-decoration: none;
+}
+
+.ctaSecondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.ctaSecondary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  color: white;
+  text-decoration: none;
+}
+
+/* Dark mode support */
+[data-theme='dark'] .whySection {
+  background-color: #1f2937;
+}
+
+[data-theme='dark'] .heading {
+  color: #f9fafb;
+}
+
+[data-theme='dark'] .subheading {
+  color: #d1d5db;
+}
+
+[data-theme='dark'] .reasonCard {
+  background-color: #374151;
+  color: #f9fafb;
+}
+
+[data-theme='dark'] .reasonTitle {
+  color: #f9fafb;
+}
+
+[data-theme='dark'] .reasonDescription {
+  color: #d1d5db;
+}
+
+/* Mobile responsiveness */
+@media screen and (max-width: 768px) {
+  .whySection {
+    padding: 4rem 1rem;
+  }
+  
+  .heading {
+    font-size: 2rem;
+  }
+  
+  .reasonsGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .cta {
+    padding: 1.5rem;
+  }
+  
+  .ctaTitle {
+    font-size: 1.75rem;
+  }
+  
+  .ctaButtons {
+    flex-direction: column;
+    align-items: center;
+  }
+}

@@ -1,0 +1,165 @@
+import LuatPlayground from '@site/src/components/LuatPlayground';
+
+# LUAT Templating
+
+**LUAT** (Lua Templates) is Luat's powerful server-side templating engine inspired by Svelte. It compiles `.luat` files into efficient Lua modules that render HTML entirely on the server.
+
+## What is LUAT?
+
+LUAT brings Svelte-like component architecture to server-side rendering with:
+
+- **📝 Familiar syntax** - `{#if}`, `{#each}`, components with props and children
+- **⚡ High performance** - Templates compile to optimized Lua code
+- **🔒 Secure by default** - Automatic HTML escaping and sensitive content handling
+- **🧩 Component system** - Reusable components with props and children
+- **🔄 No hydration** - Pure server-side rendering for blazing-fast load times
+
+## Core Concepts
+
+### Templates
+Files with `.luat` extension containing HTML markup with embedded Lua expressions:
+
+```html
+<!-- Hero.luat -->
+<div class="hero">
+    <h1>{props.title}</h1>
+    <p>{props.subtitle}</p>
+</div>
+```
+
+**Try it live:**
+
+<LuatPlayground
+  code={`<script>
+local title = "Welcome to LUAT"
+local subtitle = "Build blazing-fast server-rendered apps"
+</script>
+
+<div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8 rounded-lg text-center">
+    <h1 class="text-3xl font-bold">{title}</h1>
+    <p class="mt-2 text-blue-100">{subtitle}</p>
+</div>`}
+  height={280}
+/>
+
+### Components
+Reusable template modules that can be imported and used like HTML elements:
+
+```html
+<!-- Page.luat -->
+<script>
+    local Hero = require("components/Hero")
+</script>
+
+<div class="page">
+    <Hero title="Welcome" subtitle="Get started with LUAT" />
+</div>
+```
+
+### Script Blocks
+Two types of script execution contexts:
+
+- **`<script>`** - Runs on every render, for importing components and preparing data
+- **`<script module>`** - Runs once when module loads, for exports and utilities
+
+## Quick Start
+
+### 1. Install the CLI
+
+```bash
+npm install -g @maravilla-labs/luat
+```
+
+### 2. Initialize a Project
+
+```bash
+luat init my-project
+cd my-project
+```
+
+### 3. Create Your First Template
+
+Create `lib/components/Hello.luat`:
+
+```html
+<script>
+    local name = props.name or "World"
+</script>
+
+<div class="greeting">
+    <h1>Hello, {name}!</h1>
+    <p>Welcome to LUAT templating</p>
+</div>
+```
+
+**Try it live:**
+
+<LuatPlayground
+  code={`<script>
+local name = "Developer"
+</script>
+
+<div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Hello, {name}!</h1>
+    <p class="text-gray-600 dark:text-gray-300 mt-2">Welcome to LUAT templating</p>
+</div>`}
+  height={250}
+/>
+
+### 4. Use in a Page
+
+Create `lib/pages/Home.luat`:
+
+```html
+<script>
+    local Hello = require("lib/components/Hello")
+</script>
+
+<html>
+<head>
+    <title>My LUAT App</title>
+</head>
+<body>
+    <Hello name="Developer" />
+</body>
+</html>
+```
+
+### 5. Start Development Server
+
+```bash
+# Start development server with live reload
+luat dev
+```
+
+## Template Structure
+
+Every LUAT template follows this structure:
+
+```html
+<!-- Optional module script (runs once) -->
+<script module>
+    local type = "component:hero"
+    exports.type = type
+</script>
+
+<!-- Regular script (runs on each render) -->
+<script>
+    local Helper = require("lib/utils/helper")
+    local title = props.title or "Default Title"
+</script>
+
+<!-- HTML markup with expressions -->
+<div class="component">
+    <h1>{title}</h1>
+    {@render props.children?.()}
+</div>
+```
+
+## What's Next?
+
+- [Template Syntax](./syntax) - Learn LUAT's templating syntax
+- [Components](./components) - Building reusable components  
+- [Script Blocks](./scripts) - Working with Lua in templates
+- [CLI Reference](./cli) - Command-line tools and workflow
+- [Examples](./examples) - Real-world template examples
