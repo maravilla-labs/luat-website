@@ -246,6 +246,114 @@ end
 | 404 | Not Found | Resource doesn't exist |
 | 500 | Server Error | Unexpected errors |
 
+## HTMX Integration
+
+API routes work great with HTMX. Use response headers to control HTMX behavior:
+
+```lua
+function POST(ctx)
+    local data = ctx.form
+
+    -- Create the resource
+    local post = create_post(data)
+
+    return {
+        status = 201,
+        body = post,
+        headers = {
+            -- Client-side redirect after success
+            ["HX-Redirect"] = "/blog/" .. post.slug,
+
+            -- Trigger client-side events
+            ["HX-Trigger"] = "postCreated",
+
+            -- Trigger with data
+            ["HX-Trigger"] = '{"showMessage": {"level": "success", "text": "Post created!"}}',
+
+            -- Refresh the page
+            ["HX-Refresh"] = "true"
+        }
+    }
+end
+```
+
+### Common HTMX Response Headers
+
+| Header | Purpose |
+|--------|---------|
+| `HX-Redirect` | Redirect to a new URL |
+| `HX-Trigger` | Trigger client-side events |
+| `HX-Retarget` | Change the swap target |
+| `HX-Reswap` | Change the swap method |
+| `HX-Refresh` | Force a full page refresh |
+| `HX-Push-Url` | Update browser URL |
+
+## The fail() Helper
+
+Use the `fail()` function for consistent error responses:
+
+```lua
+function POST(ctx)
+    local data = ctx.form
+
+    -- Validation
+    if not data.title or data.title == "" then
+        return fail(400, {
+            error = "Title is required",
+            field = "title"
+        })
+    end
+
+    -- Authorization
+    if not ctx.headers["Authorization"] then
+        return fail(401, { error = "Authentication required" })
+    end
+
+    -- Not found
+    local post = find_post(ctx.params.slug)
+    if not post then
+        return fail(404, { error = "Post not found" })
+    end
+
+    -- Success
+    return {
+        status = 200,
+        body = post
+    }
+end
+```
+
+`fail(status, data)` is equivalent to returning:
+
+```lua
+return {
+    status = status,
+    body = data
+}
+```
+
+## Method Aliasing
+
+You can reuse handlers for similar methods:
+
+```lua
+-- src/routes/api/posts/[slug]/+server.lua
+
+function POST(ctx)
+    local data = ctx.form
+    return update_post(ctx.params.slug, data)
+end
+
+-- PUT does the same as POST
+PUT = POST
+
+-- Or define variations
+function PATCH(ctx)
+    local data = ctx.form
+    return partial_update_post(ctx.params.slug, data)
+end
+```
+
 ## API Route Organization
 
 Organize your API routes logically:

@@ -245,3 +245,98 @@ function load(ctx)
     return { item = item }
 end
 ```
+
+## Fragments
+
+Fragments are partial HTML templates that render without the full page wrapper. They're useful for HTMX-style partial updates where you want to swap just a portion of the page.
+
+### The (fragments) Folder
+
+Place fragment templates in a `(fragments)` subfolder of your route:
+
+```
+src/routes/todos/
+├── +page.luat           # Full page
+├── +page.server.lua     # load() + actions
+└── (fragments)/         # Fragment templates
+    ├── add.luat
+    ├── delete.luat
+    └── toggle.luat
+```
+
+### Triggering Fragments
+
+Fragments are triggered using the `?/name` URL pattern:
+
+| URL | Method | What happens |
+|-----|--------|--------------|
+| `GET /todos` | GET | Renders `+page.luat` (full page) |
+| `GET /todos?/add` | GET | Runs `actions.add`, renders `(fragments)/add.luat` |
+| `POST /todos?/add` | POST | Runs `actions.add`, renders `(fragments)/add.luat` |
+| `POST /todos?/delete` | POST | Runs `actions.delete`, renders `(fragments)/delete.luat` |
+
+Both GET and POST (and other methods) can trigger fragments. The action runs first, then the fragment renders with the action's return value as `props`.
+
+### Fragment Naming
+
+Fragments can be method-specific:
+
+- `add.luat` - Renders for any method
+- `POST-add.luat` - Renders only for POST requests (takes precedence)
+- `GET-refresh.luat` - Renders only for GET requests
+
+```
+(fragments)/
+├── add.luat           # Any method
+├── POST-add.luat      # POST only (preferred over add.luat for POST)
+├── delete.luat
+└── GET-refresh.luat   # GET only
+```
+
+### Basic Example
+
+```lua
+-- +page.server.lua
+actions = {
+    add = function(ctx)
+        local item = create_item(ctx.form.title)
+        return { item = item }
+    end,
+
+    delete = function(ctx)
+        delete_item(ctx.form.id)
+        return { deleted = true }
+    end
+}
+```
+
+```html
+<!-- (fragments)/add.luat -->
+<li>{props.item.title}</li>
+```
+
+```html
+<!-- (fragments)/delete.luat -->
+<!-- Empty template removes the element -->
+```
+
+For a complete walkthrough with HTMX integration, see the [HTMX & Fragments Guide](/docs/advanced/htmx-and-fragments).
+
+### Response Headers
+
+The engine automatically sets `x-luat-fragment: true` on fragment responses. This tells adapters to return the HTML directly without wrapping it in `app.html`.
+
+### No Fragment: JSON Response
+
+If no matching fragment template exists, the action result is returned as JSON:
+
+```json
+{
+    "todo": {
+        "id": "123",
+        "title": "Buy milk"
+    }
+}
+```
+
+This is useful for API-style responses or when you handle the response client-side with JavaScript.

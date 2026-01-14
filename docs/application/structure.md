@@ -291,7 +291,22 @@ src/routes/blog/
     └── +page.server.lua
 ```
 
-### 4. Static Assets
+### 4. Fragments
+
+For HTMX-style partial updates, place fragment templates in a `(fragments)` subfolder:
+
+```
+src/routes/todos/
+├── +page.luat
+├── +page.server.lua
+└── (fragments)/
+    ├── add.luat
+    └── delete.luat
+```
+
+See [Fragments](/docs/application/dynamic-routes#fragments) for details.
+
+### 5. Static Assets
 
 - Small, frequently-used images: `static/`
 - Large media files: External CDN recommended

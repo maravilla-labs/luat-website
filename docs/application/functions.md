@@ -2,6 +2,14 @@
 
 Luat provides server-side data loading through `+page.server.lua` files. These files run on the server before rendering and pass data to your templates.
 
+:::tip Handling Mutations
+The `load()` function handles GET requests. For POST, PUT, and DELETE requests (form submissions, updates, deletions), use [Form Actions](/docs/application/form-actions).
+:::
+
+:::info Built-in Storage
+Luat includes a [KV Store](/docs/application/kv-store) for persistent data storage - no external database required to get started.
+:::
+
 ## Basic Data Loading
 
 Create a `+page.server.lua` file next to your `+page.luat`:
@@ -106,6 +114,33 @@ function load(ctx)
     }
 end
 ```
+
+### From the Built-in KV Store
+
+Luat includes a built-in Key-Value store that works across CLI (SQLite-backed) and WASM (in-memory) environments:
+
+```lua
+local kv = KV.namespace("blog")
+
+function load(ctx)
+    local result = kv:list({ prefix = "post:" })
+    local posts = {}
+
+    for _, key in ipairs(result.keys) do
+        local post = kv:get(key.name, "json")
+        if post then
+            table.insert(posts, post)
+        end
+    end
+
+    return {
+        title = "Blog",
+        posts = posts
+    }
+end
+```
+
+The KV store supports namespaces, expiration, metadata, and pagination. See the [KV Store documentation](/docs/application/kv-store) for the complete API and examples.
 
 ### Dynamic Route Data
 
