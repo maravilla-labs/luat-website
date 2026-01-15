@@ -61,6 +61,25 @@ function load(ctx)
 end
 ```
 
+### Setting Page Context
+
+Loaders can set page-level metadata that persists across the entire request using `ctx.setPageContext()`:
+
+```lua
+function load(ctx)
+    local post = db.get_post(ctx.params.slug)
+
+    -- Set page title for browser tab and HTMX boosted navigation
+    ctx.setPageContext("view_title", post.title .. " - My Blog")
+
+    return { post = post }
+end
+```
+
+The `view_title` key is special—it's used in `app.html` via `%luat.title%` and automatically sent as an `HX-Title` header for HTMX boosted navigation.
+
+See [Page Context API](/docs/templating/components#page-context-api) for more details.
+
 ### Return Value
 
 Return a Lua table with any data your template needs:
@@ -85,6 +104,10 @@ end
 
 ### From External APIs
 
+Luat provides a built-in `http` module for making HTTP requests from loaders and actions.
+
+#### Basic GET Request
+
 ```lua
 local http = require("http")
 local json = require("json")
@@ -98,6 +121,92 @@ function load(ctx)
         posts = posts
     }
 end
+```
+
+#### HTTP Methods
+
+The `http` module supports all common HTTP methods:
+
+```lua
+local http = require("http")
+local json = require("json")
+
+-- GET request
+local response = http.get("https://api.example.com/users")
+
+-- POST request with body
+local response = http.post("https://api.example.com/users", {
+    body = json.encode({ name = "John", email = "john@example.com" }),
+    headers = { ["Content-Type"] = "application/json" }
+})
+
+-- PUT request
+local response = http.put("https://api.example.com/users/1", {
+    body = json.encode({ name = "John Updated" }),
+    headers = { ["Content-Type"] = "application/json" }
+})
+
+-- DELETE request
+local response = http.delete("https://api.example.com/users/1")
+
+-- PATCH request
+local response = http.patch("https://api.example.com/users/1", {
+    body = json.encode({ name = "Patched" }),
+    headers = { ["Content-Type"] = "application/json" }
+})
+```
+
+#### Response Object
+
+All HTTP methods return a response table with:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | number | HTTP status code (200, 404, etc.) |
+| `ok` | boolean | `true` if status is 2xx |
+| `body` | string | Response body as text |
+| `headers` | table | Response headers |
+
+```lua
+local response = http.get("https://api.example.com/users")
+
+if response.ok then
+    local users = json.decode(response.body)
+    -- process users
+else
+    print("Error: " .. response.status)
+end
+```
+
+#### Request Options
+
+All methods accept an optional options table:
+
+```lua
+local response = http.get("https://api.example.com/data", {
+    headers = {
+        ["Authorization"] = "Bearer " .. token,
+        ["Accept"] = "application/json"
+    },
+    timeout = 10  -- timeout in seconds (default: 30)
+})
+```
+
+#### Generic Request
+
+For more control, use `http.request()`:
+
+```lua
+local response = http.request({
+    method = "POST",
+    url = "https://api.example.com/webhook",
+    body = json.encode({ event = "test" }),
+    headers = {
+        ["Content-Type"] = "application/json",
+        ["X-Custom-Header"] = "value"
+    },
+    timeout = 60
+})
 ```
 
 ### From Databases

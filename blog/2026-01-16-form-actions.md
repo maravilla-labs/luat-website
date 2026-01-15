@@ -4,7 +4,7 @@ title: "We Quietly Shipped Two Things"
 authors: [labertasch]
 tags: [form-actions, kv-store, htmx, routing, mutations, persistence, announcement]
 description: Alongside the open-source release, we added form actions and a built-in KV store. Here's what we built.
-date: 2026-01-14
+date: 2026-01-16
 draft: true
 ---
 

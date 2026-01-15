@@ -455,13 +455,43 @@ Standard HTML comments are preserved in the output:
 <div>Content</div>
 ```
 
-### Template Comments
+### Template Comments (Multi-line)
 
-LUAT comments are removed during compilation:
+LUAT multi-line comments are removed during compilation. Use `{/* ... */}` syntax:
 
 ```html
 {/* This comment is only visible in the source */}
 <div>Content</div>
+```
+
+Multi-line comments can span multiple lines and safely contain template-like syntax without being parsed:
+
+```html
+{/*
+================================================================================
+PAGE DOCUMENTATION
+================================================================================
+This template demonstrates {props.value} interpolation.
+Control flow like {#if condition} and {#each items as item} inside comments
+is NOT parsed - it's treated as plain text.
+*/}
+<div>Content</div>
+```
+
+### Lua-style Comments (Single-line)
+
+For shorter comments, use Lua's double-dash syntax with `{-- ... --}`:
+
+```html
+{-- This is a single-line comment --}
+<div>Content</div>
+```
+
+Like multi-line comments, template syntax inside is not parsed:
+
+```html
+{-- {props.value} and {#if x} are ignored here --}
+<span>OK</span>
 ```
 
 ## Whitespace Handling
@@ -583,14 +613,76 @@ local itemCount = #items
   height={270}
 />
 
-## Special Characters
+## Escaping Curly Braces
 
-Escape special characters when needed:
+Since curly braces `{` and `}` are used for expressions, you need to escape them when you want literal braces in your output. Use backslash to escape: `\{` outputs `{` and `\}` outputs `}`.
+
+### Basic Usage
 
 ```html
-<!-- Literal braces -->
+<!-- Outputs: Use \{curly braces\} for expressions -->
 <pre>Use \{curly braces\} for expressions</pre>
 
+<!-- Outputs: JSON example: \{"key": "value"\} -->
+<p>JSON example: \{"key": "value"\}</p>
+```
+
+### HTMX Attributes
+
+This is particularly useful with HTMX when you need JavaScript object syntax in attributes:
+
+```html
+<button
+    data-id="{todo.id}"
+    hx-post="?/toggle"
+    hx-vals="js:\{id: this.dataset.id\}"
+    hx-target="#todo-{todo.id}"
+>
+    Toggle
+</button>
+```
+
+The `hx-vals` attribute renders as `hx-vals="js:{id: this.dataset.id}"`, which HTMX interprets as a JavaScript expression to get the ID from the button's data attribute.
+
+### Combining Escaped and Dynamic Content
+
+You can mix escaped braces with dynamic expressions:
+
+```html
+<!-- Outputs: User Alice has role: {"admin": true} -->
+<p>User {props.name} has role: \{"admin": {props.isAdmin}\}</p>
+```
+
+<LuatPlayground
+  code={`<script>
+local user = "Alice"
+local isAdmin = true
+</script>
+
+<div class="space-y-3 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+    <p class="dark:text-gray-200">
+        Literal braces: <code class="bg-gray-200 dark:bg-gray-700 px-1 rounded">\\{example\\}</code>
+    </p>
+    <p class="dark:text-gray-200">
+        User {user} has role: \\{"admin": {isAdmin}\\}
+    </p>
+</div>`}
+  height={220}
+/>
+
+:::tip HTMX Pattern
+When using HTMX with dynamic data, prefer using `data-*` attributes for your values and escaped braces for the JavaScript expression:
+
+```html
+<button data-id="{item.id}" hx-vals="js:\\{id: this.dataset.id\\}">
+```
+
+This keeps your Luat expressions clean while still passing dynamic data to HTMX.
+:::
+
+## Other Special Characters
+
+```html
 <!-- Quotes in attributes -->
 <button onclick="alert('Hello {props.name}')">Click me</button>
 ```

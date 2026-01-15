@@ -1,0 +1,424 @@
+# Alpine.js Patterns
+
+import LuatPlayground from '@site/src/components/LuatPlayground';
+
+Combine server-rendered Luat templates with Alpine.js for lightweight client-side interactivity.
+
+> **Why Luat + Alpine?** Luat handles server-side rendering with full Lua power, while Alpine.js adds reactive behavior without a build step. Together they create fast, interactive pages with minimal JavaScript.
+
+## Setup
+
+### CDN
+
+Add Alpine.js to your `app.html` before the closing `</body>` tag:
+
+```html
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+```
+
+### npm
+
+```bash
+npm install alpinejs
+```
+
+```typescript
+// assets/js/app.ts
+import Alpine from 'alpinejs';
+
+window.Alpine = Alpine;
+Alpine.start();
+```
+
+### Using with HTMX
+
+When using Alpine.js together with HTMX, Alpine components in swapped content need to be reinitialized. Alpine uses a `MutationObserver` that automatically detects DOM changes, but for reliable initialization during HTMX swaps, use the deferred mutations pattern:
+
+```typescript
+// assets/js/app.ts
+import Alpine from 'alpinejs';
+import htmx from 'htmx.org';
+
+// Pause Alpine during HTMX swaps, resume after DOM settles
+document.addEventListener('htmx:beforeSwap', () => {
+  Alpine.deferMutations();
+});
+
+document.addEventListener('htmx:afterSettle', () => {
+  Alpine.flushAndStopDeferringMutations();
+});
+
+window.Alpine = Alpine;
+window.htmx = htmx;
+Alpine.start();
+```
+
+This pauses Alpine's reactivity before HTMX modifies the DOM and resumes it after the swap completes, ensuring newly injected Alpine components initialize correctly.
+
+:::tip
+Use `htmx:afterSettle` rather than `htmx:afterSwap` as it fires after the DOM has fully stabilized.
+:::
+
+### Preventing Flash of Unstyled Content
+
+Add this CSS to your stylesheet to hide elements until Alpine initializes:
+
+```css
+[x-cloak] { display: none !important; }
+```
+
+Elements with `x-cloak` will be hidden until Alpine removes the attribute on initialization, preventing flickering of unprocessed templates.
+
+## Escaping Curly Braces
+
+Alpine.js uses `{ }` for JavaScript expressions. Since Luat also uses curly braces for template expressions, you must escape Alpine's braces:
+
+```html
+<!-- Luat template -->
+<div x-data="\{ count: 0 \}">
+```
+
+This outputs literal braces that Alpine can interpret:
+
+```html
+<!-- Rendered HTML -->
+<div x-data="{ count: 0 }">
+```
+
+## Basic Patterns
+
+### Toggle Visibility
+
+Use `x-show` to toggle element visibility and `x-cloak` to prevent flash:
+
+<LuatPlayground
+  alpine={true}
+  height={280}
+  code={`<div x-data="\\{ open: false }" class="p-6">
+  <button
+    @click="open = !open"
+    class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+  >
+    <span x-text="open ? 'Hide' : 'Show'">Show</span> Details
+  </button>
+
+  <div
+    x-show="open"
+    x-cloak
+    x-transition
+    class="mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg border border-indigo-200 dark:border-indigo-800"
+  >
+    <p class="text-indigo-800 dark:text-indigo-200">This content toggles with a smooth transition!</p>
+  </div>
+</div>`}
+/>
+
+### Counter with Animation
+
+<LuatPlayground
+  alpine={true}
+  height={200}
+  code={`<div x-data="\\{ count: 0 }" class="p-6 flex items-center gap-4">
+  <button
+    @click="count--"
+    class="w-10 h-10 rounded-full bg-red-500 text-white text-xl font-bold hover:bg-red-600 transition-colors"
+  >
+    -
+  </button>
+
+  <span
+    x-text="count"
+    class="text-4xl font-bold text-gray-800 dark:text-gray-100 w-16 text-center"
+    :class="count > 0 ? 'text-green-600' : count < 0 ? 'text-red-600' : ''"
+  >0</span>
+
+  <button
+    @click="count++"
+    class="w-10 h-10 rounded-full bg-green-500 text-white text-xl font-bold hover:bg-green-600 transition-colors"
+  >
+    +
+  </button>
+</div>`}
+/>
+
+## Luat + Alpine Components
+
+### Accordion with Lua Data
+
+Define FAQ items in a Lua script and iterate with `{#each}`. Alpine handles the open/close state client-side:
+
+<LuatPlayground
+  alpine={true}
+  height={480}
+  code={`<script>
+  local faqs = {
+    { id = "what", question = "What is Luat?", answer = "Luat is a web framework combining Lua scripting with modern templating for fast, server-rendered pages." },
+    { id = "why", question = "Why use Alpine.js?", answer = "Alpine provides reactive behavior without a build step - perfect for enhancing server-rendered pages with interactivity." },
+    { id = "how", question = "How do they work together?", answer = "Luat renders the HTML structure and data server-side, Alpine adds client-side interactivity like toggles and animations." },
+  }
+</script>
+
+<div class="p-4 space-y-2 max-w-lg">
+  {#each faqs as faq}
+    <div x-data="\\{ open: false }" class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+      <button
+        @click="open = !open"
+        class="w-full px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+      >
+        <span class="font-medium text-gray-800 dark:text-gray-200">{faq.question}</span>
+        <svg
+          class="w-5 h-5 text-gray-500 transition-transform duration-200"
+          :class="open && 'rotate-180'"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+      <div x-show="open" x-collapse x-cloak class="px-4 py-3 text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-900">
+        {faq.answer}
+      </div>
+    </div>
+  {/each}
+</div>`}
+/>
+
+### Tabs with Dynamic Content
+
+Define tabs in Lua, render with `{#each}`, and let Alpine manage the active state:
+
+<LuatPlayground
+  alpine={true}
+  height={380}
+  code={`<script>
+  local tabs = {
+    { id = "features", label = "Features", title = "Powerful Features", content = "Server-side rendering with Lua, component system, and seamless Alpine.js integration." },
+    { id = "performance", label = "Performance", title = "Blazing Fast", content = "Pre-rendered HTML means instant page loads. Alpine adds interactivity without heavy JavaScript bundles." },
+    { id = "developer", label = "DX", title = "Developer Experience", content = "Write templates in familiar HTML syntax, use Lua for logic, and enjoy hot reloading during development." },
+  }
+  local default_tab = tabs[1].id
+</script>
+
+<div x-data="\\{ tab: '{default_tab}' }" class="p-4">
+  <!-- Tab buttons from Lua data -->
+  <div class="flex border-b border-gray-200 dark:border-gray-700">
+    {#each tabs as t}
+      <button
+        @click="tab = '{t.id}'"
+        :class="tab === '{t.id}' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+        class="px-4 py-2 border-b-2 font-medium transition-colors"
+      >
+        {t.label}
+      </button>
+    {/each}
+  </div>
+
+  <!-- Tab panels -->
+  <div class="py-4">
+    {#each tabs as t}
+      <div x-show="tab === '{t.id}'" x-transition class="text-gray-700 dark:text-gray-300">
+        <h3 class="font-bold text-lg mb-2">{t.title}</h3>
+        <p>{t.content}</p>
+      </div>
+    {/each}
+  </div>
+</div>`}
+/>
+
+### Dropdown Menu with Lua Items
+
+<LuatPlayground
+  alpine={true}
+  height={380}
+  code={`<script>
+  local menu_items = {
+    { label = "Profile", href = "/profile", icon = "user" },
+    { label = "Settings", href = "/settings", icon = "cog" },
+    { label = "Help", href = "/help", icon = "question" },
+  }
+</script>
+
+<div x-data="\\{ open: false, selected: 'Select option' }" class="p-6 relative">
+  <button
+    @click="open = !open"
+    @click.outside="open = false"
+    class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors min-w-[180px]"
+  >
+    <span x-text="selected" class="text-gray-700 dark:text-gray-200 flex-1 text-left">Select option</span>
+    <svg
+      class="w-4 h-4 text-gray-500 transition-transform duration-200"
+      :class="open && 'rotate-180'"
+      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+    >
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    </svg>
+  </button>
+
+  <div
+    x-show="open"
+    x-transition:enter="transition ease-out duration-100"
+    x-transition:enter-start="opacity-0 -translate-y-2"
+    x-transition:enter-end="opacity-100 translate-y-0"
+    x-transition:leave="transition ease-in duration-75"
+    x-transition:leave-start="opacity-100 translate-y-0"
+    x-transition:leave-end="opacity-0 -translate-y-2"
+    class="absolute mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-10"
+    x-cloak
+  >
+    {#each menu_items as item}
+      <button
+        @click="selected = '{item.label}'; open = false"
+        class="w-full text-left px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+      >
+        {item.label}
+      </button>
+    {/each}
+    <hr class="border-gray-200 dark:border-gray-700">
+    <button class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
+      Sign out
+    </button>
+  </div>
+</div>`}
+/>
+
+## Reusable Component Patterns
+
+### Modal Component
+
+Create a reusable `Modal` component that accepts a title and renders children as content:
+
+<LuatPlayground
+  alpine={true}
+  height={450}
+  files={[
+    { name: "Modal.luat", code: `<script>
+  -- Component props
+  local title = props.title or "Modal"
+  local button_text = props.button or "Open"
+</script>
+
+<div x-data="\\{ open: false }">
+  <button
+    @click="open = true"
+    class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
+  >
+    {button_text}
+  </button>
+
+  <!-- Backdrop -->
+  <div
+    x-show="open"
+    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+    @click="open = false"
+    x-cloak
+  ></div>
+
+  <!-- Modal panel -->
+  <div
+    x-show="open"
+    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0 scale-95"
+    x-transition:enter-end="opacity-100 scale-100"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100 scale-100"
+    x-transition:leave-end="opacity-0 scale-95"
+    class="fixed inset-0 flex items-center justify-center z-50 p-4"
+    x-cloak
+  >
+    <div @click.stop class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 max-w-md w-full">
+      <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4">{title}</h3>
+      <div class="text-gray-600 dark:text-gray-300 mb-6">
+        {@render props.children?.()}
+      </div>
+      <button
+        @click="open = false"
+        class="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>` },
+    { name: "main.luat", code: `<script>
+  local Modal = require("Modal")
+</script>
+
+<div class="p-6 space-y-4">
+  <Modal title="Welcome to Luat!" button="Say Hello">
+    <p class="mb-2">This modal content is passed as <strong>children</strong> to the Modal component.</p>
+    <p>The title comes from a prop, and Alpine.js handles the open/close animation.</p>
+  </Modal>
+
+  <Modal title="Delete Item?" button="Delete Something">
+    <p class="mb-2">Are you sure you want to delete this item?</p>
+    <p class="text-red-500 text-sm">This action cannot be undone.</p>
+  </Modal>
+</div>` }
+  ]}
+/>
+
+### Accordion Component
+
+A reusable accordion item component used with Lua data:
+
+<LuatPlayground
+  alpine={true}
+  height={520}
+  files={[
+    { name: "AccordionItem.luat", code: `<script>
+  local title = props.title or "Accordion Item"
+  local open_state = props.open and "true" or "false"
+</script>
+
+<div x-data="\\{ open: {open_state} }" class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+  <button
+    @click="open = !open"
+    class="w-full px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+  >
+    <span class="font-medium text-gray-800 dark:text-gray-200">{title}</span>
+    <svg
+      class="w-5 h-5 text-gray-500 transition-transform duration-200"
+      :class="open && 'rotate-180'"
+      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+    >
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    </svg>
+  </button>
+  <div x-show="open" x-transition x-cloak class="px-4 py-3 text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-900">
+    {@render props.children?.()}
+  </div>
+</div>` },
+    { name: "main.luat", code: `<script>
+  local AccordionItem = require("AccordionItem")
+
+  local features = {
+    { title = "Server-Side Rendering", desc = "Luat pre-renders HTML on the server for instant page loads and great SEO.", open = true },
+    { title = "Lua Scripting", desc = "Use the full power of Lua for template logic, data transformation, and business rules." },
+    { title = "Component System", desc = "Build reusable components with props and children, just like modern frameworks." },
+    { title = "Alpine.js Integration", desc = "Add client-side interactivity without heavy JavaScript bundles or build steps." },
+  }
+</script>
+
+<div class="p-4 space-y-2 max-w-lg">
+  <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Luat Features</h2>
+
+  {#each features as feature}
+    <AccordionItem title="{feature.title}" open={feature.open}>
+      <p>{feature.desc}</p>
+    </AccordionItem>
+  {/each}
+</div>` }
+  ]}
+/>
+
+## Resources
+
+- [Alpine.js Documentation](https://alpinejs.dev/)
+- [Alpine.js Directives Reference](https://alpinejs.dev/directives)
+- [Luat Components](/docs/templating/components)
+- [Luat Scripts](/docs/templating/scripts)

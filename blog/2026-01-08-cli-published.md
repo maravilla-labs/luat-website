@@ -2,7 +2,7 @@
 slug: luat-cli-published
 title: "Luat CLI is Ready: Install and Start Building in Seconds"
 authors: [labertasch]
-tags: [luat, cli, release, npm, homebrew, toolchain, rust]
+tags: [luat, cli, release, npm, toolchain, rust]
 description: The Luat CLI is ready and will be published soon. A Rust-powered development experience with live reload, integrated toolchain, and file-based routing.
 date: 2026-01-08
 ---
@@ -33,12 +33,6 @@ Once published, choose your preferred installation method:
 
 ```bash
 npm install -g @maravilla-labs/luat
-```
-
-### Homebrew (macOS)
-
-```bash
-brew install maravilla-labs/tap/luat
 ```
 
 ### Shell Script (Linux/macOS)

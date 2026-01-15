@@ -595,6 +595,74 @@ When using Luat with a framework like Wunderframe, certain context values are au
 </div>
 ```
 
+### Page Context API
+
+While `setContext`/`getContext` use a scoped stack (values are lost when the component finishes rendering), **page context** persists for the entire request. This is ideal for page-level metadata like titles and descriptions.
+
+#### `setPageContext(key, value)`
+
+Sets a value in the page context that persists across the entire request:
+
+```html
+<script>
+    -- Set the page title (used by app.html and HX-Title header)
+    setPageContext("view_title", props.post.title .. " - My Blog")
+</script>
+```
+
+#### `getPageContext(key)`
+
+Retrieves a value from the page context:
+
+```html
+<script>
+    local title = getPageContext("view_title")
+</script>
+```
+
+#### Usage in Loaders
+
+Page context can also be set from `+page.server.lua` loaders:
+
+```lua
+-- +page.server.lua
+function load(ctx)
+    local post = db.get_post(ctx.params.slug)
+
+    -- Set page title for HTMX boosted navigation
+    ctx.setPageContext("view_title", post.title)
+
+    return { post = post }
+end
+```
+
+#### Page Context vs Regular Context
+
+| Feature | `setContext` | `setPageContext` |
+|---------|-------------|------------------|
+| **Scope** | Component subtree | Entire request |
+| **Lifetime** | Until component finishes | Until response is sent |
+| **Use case** | Sharing data with children | Page metadata (title, description) |
+| **HTMX support** | No | Yes (`HX-Title` header) |
+
+#### Special Keys
+
+- `view_title` - Sets the page title. Used in `app.html` via `%luat.title%` and sent as `HX-Title` header for HTMX boosted navigation.
+
+:::tip[Enable HX-Title Support]
+To update the browser title during HTMX navigation, install the [@maravilla-labs/htmx-ext-title](https://www.npmjs.com/package/@maravilla-labs/htmx-ext-title) extension and add `hx-ext="title"` to your `<body>` tag. See [HTMX Patterns - Title Extension](/docs/advanced/htmx-patterns#title-extension) for setup details.
+:::
+
+```html
+<!-- In +page.luat -->
+<script>
+    setPageContext("view_title", "About Us - My Site")
+</script>
+
+<h1>About Us</h1>
+<p>Welcome to our company...</p>
+```
+
 ## Component Types
 
 ### Module Exports

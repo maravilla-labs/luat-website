@@ -10,12 +10,6 @@ The Luat CLI is the command-line tool for creating, developing, building, and se
 npm install -g @maravilla-labs/luat
 ```
 
-### Homebrew (macOS)
-
-```bash
-brew install maravilla-labs/tap/luat
-```
-
 ### Shell Script (Linux/macOS)
 
 ```bash

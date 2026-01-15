@@ -63,6 +63,7 @@ const sidebars = {
       items: [
         'advanced/htmx-patterns',
         'advanced/htmx-and-fragments',
+        'advanced/alpine-patterns',
       ],
     },
   ],

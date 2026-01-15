@@ -4,8 +4,7 @@ title: "Luat is Now Fully Open Source"
 authors: [labertasch]
 tags: [luat, open-source, apache-2.0, mit, maravilla-labs, announcement]
 description: We're open-sourcing Luat under the MIT and Apache 2.0 licenses. The full codebase is now available on GitHub.
-date: 2026-01-13
-draft: true
+date: 2026-01-15
 ---
 
 # Luat is Now Fully Open Source

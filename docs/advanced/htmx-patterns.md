@@ -129,6 +129,27 @@ Pass JSON values:
 </button>
 ```
 
+### Dynamic Values with Luat
+
+When using `hx-vals` with dynamic data in Luat templates, use `data-*` attributes combined with HTMX's `js:` prefix and escaped braces:
+
+```html
+<button
+    data-id="{todo.id}"
+    hx-post="?/toggle"
+    hx-vals="js:\{id: this.dataset.id\}"
+    hx-target="#todo-{todo.id}"
+>
+    Toggle
+</button>
+```
+
+The `\{` and `\}` escape sequences output literal braces, so `hx-vals` renders as `js:{id: this.dataset.id}`. HTMX evaluates this JavaScript expression at runtime to read from the button's data attribute.
+
+:::tip
+See [Escaping Curly Braces](/docs/templating/syntax#escaping-curly-braces) for more details on the escape syntax.
+:::
+
 ### hx-include
 
 Include form fields:
@@ -191,6 +212,7 @@ Control HTMX from server responses:
 | `HX-Trigger` | Trigger client events |
 | `HX-Reswap` | Change swap method |
 | `HX-Retarget` | Change target element |
+| `HX-Title` | Update document title (requires extension) |
 
 ```lua
 return {
@@ -232,6 +254,38 @@ HTMX can be extended with additional capabilities:
 
 - **Idiomorph** - Intelligent DOM morphing that preserves focus and form state
 - **View Transitions** - Smooth animations when content changes
+- **[@maravilla-labs/htmx-ext-title](https://www.npmjs.com/package/@maravilla-labs/htmx-ext-title)** - Update document title from `HX-Title` response header
+
+### Title Extension
+
+The title extension updates the browser's document title when Luat sends the `HX-Title` response header. This is essential for proper browser history when using `hx-boost` or AJAX navigation.
+
+**Installation:**
+
+```bash
+npm install @maravilla-labs/htmx-ext-title
+```
+
+**Setup in app.ts:**
+
+```typescript
+import htmx from 'htmx.org';
+import { title } from '@maravilla-labs/htmx-ext-title';
+
+title(htmx);
+```
+
+**Enable in app.html:**
+
+```html
+<body hx-boost="true" hx-ext="title">
+    %luat.body%
+</body>
+```
+
+**How it works:**
+
+When you set `view_title` via `setPageContext("view_title", "My Page")` in your templates or loaders, Luat automatically sends this as an `HX-Title` response header. The extension reads this header and updates `document.title`.
 
 For detailed setup with Luat forms and fragments, see the [HTMX & Fragments Guide](/docs/advanced/htmx-and-fragments#advanced-smooth-animations).
 
