@@ -1,0 +1,18 @@
+.search { display: flex; gap: .5rem; margin: 1.5rem 0 1rem; }
+.search input { flex: 1; padding: .6rem .8rem; font-size: 1rem; border-radius: 6px;
+  border: 1px solid var(--ifm-color-emphasis-300); background: var(--ifm-background-color); color: inherit; }
+.count { color: var(--ifm-color-emphasis-700); }
+.list { list-style: none; padding: 0; }
+.item { padding: .9rem 0; border-bottom: 1px solid var(--ifm-color-emphasis-200); }
+.item p { margin: .25rem 0 0; }
+.name { font-weight: 700; font-size: 1.1rem; }
+.version { margin-left: .5rem; font-size: .85em; font-weight: 400; color: var(--ifm-color-emphasis-700); }
+.error { color: var(--ifm-color-danger); }
+.detail { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 2.5rem; margin: 2rem 0; }
+.lead { font-size: 1.15rem; }
+.side h4 { margin: 1.2rem 0 .3rem; }
+.side ul { padding-left: 1rem; }
+.yanked { color: var(--ifm-color-warning-darker); font-size: .85em; }
+.date { color: var(--ifm-color-emphasis-600); font-size: .85em; }
+.files { max-height: 300px; overflow: auto; }
+@media (max-width: 900px) { .detail { grid-template-columns: 1fr; } }

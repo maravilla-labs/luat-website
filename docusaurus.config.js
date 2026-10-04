@@ -96,6 +96,7 @@ const config = {
             position: 'left',
             label: 'Documentation',
           },
+          {to: '/packages', label: 'Packages', position: 'left'},
           {to: '/blog', label: 'Blog', position: 'left'},
           {
             href: 'https://github.com/maravilla-labs/luat',
