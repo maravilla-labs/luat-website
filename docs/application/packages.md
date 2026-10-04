@@ -56,7 +56,7 @@ version = "1.2.0"
 description = "Cards, buttons and layouts"
 license = "MIT"
 repository = "https://github.com/acme/ui"
-luat = ">=0.2"                 # Luat versions it works with
+luat = ">=0.1"                 # Luat versions it works with
 
 [dependencies]
 "@acme/icons" = "^2.0"
