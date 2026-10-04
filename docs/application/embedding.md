@@ -8,7 +8,7 @@ Add Luat to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-luat = "0.1"
+luat = { git = "https://github.com/maravilla-labs/luat", tag = "v0.2.0" }
 ```
 
 ## Basic Usage
