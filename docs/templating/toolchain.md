@@ -137,9 +137,45 @@ Each tool runs independently:
 - Sass compiles your custom styles
 - esbuild bundles your JavaScript/TypeScript
 
+## Entries: hashed builds
+
+List the files the browser loads as `entries`, and luat builds them with
+the content hash in every file name, so they can be cached forever:
+
+```toml
+[frontend]
+enabled = ["tailwind", "esbuild"]
+entries = ["src/client/app.js", "src/client/app.css"]
+```
+
+- JavaScript/TypeScript entries are bundled by esbuild as ES modules: npm
+  imports (`import htmx from "htmx.org"`) are bundled in, and dynamic
+  `import()`s become chunks of their own.
+- CSS entries go through Tailwind when it is enabled.
+- The output lands in `_luat/immutable/` (`app-5EVC5ZLM.css`), and
+  `luat serve` caches it with `Cache-Control: immutable`.
+- `luat dev` rebuilds on every change.
+
+Templates get the URL with `asset()`:
+
+```luat
+<script type="module" src={asset("src/client/app.js")}></script>
+<link rel="stylesheet" href={asset("src/client/app.css")}>
+```
+
+With an `app.html` shell, `%luat.head%` already includes the tags for all
+entries.
+
+esbuild and Tailwind come from the project's `node_modules/.bin` when it
+has them, so the versions in `package.json` apply; otherwise they are
+downloaded as described below.
+
+Files that need a fixed URL (favicon, `robots.txt`, downloads) stay in
+`public/`.
+
 ## Linking Assets
 
-Include your compiled assets in `src/app.html`:
+Without `entries`, include the compiled assets in `src/app.html`:
 
 ```html
 <!DOCTYPE html>

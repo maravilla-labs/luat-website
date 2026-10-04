@@ -93,6 +93,7 @@ Frontend toolchain configuration.
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `enabled` | array | `[]` | Enabled frontend tools: `"sass"`, `"tailwind"`, `"typescript"` |
+| `entries` | array | `[]` | Client entries (`"src/client/app.js"`, `"src/client/app.css"`) built with content-hashed names into `_luat/immutable/`; templates get their URLs with `asset("…")`. When set, the fixed `*_entrypoint`/`*_output` builds are not used. See [Frontend Toolchain](./toolchain.md#entries-hashed-builds) |
 
 #### Sass Options
 
